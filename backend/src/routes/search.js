@@ -5,23 +5,28 @@ const AITool = require('../models/AITool');
 // Search tools
 router.get('/', async (req, res) => {
   try {
-    const { query, category } = req.query;
-    let searchQuery = {};
-
-    if (query) {
-      searchQuery.$or = [
-        { name: { $regex: query, $options: 'i' } },
-        { description: { $regex: query, $options: 'i' } }
-      ];
+    const { query } = req.query;
+    
+    if (!query) {
+      return res.json([]);
     }
 
-    if (category) {
-      searchQuery.category = category;
-    }
+    // Create a case-insensitive regex pattern
+    const searchPattern = new RegExp(query, 'i');
 
-    const tools = await AITool.find(searchQuery)
-      .sort({ 'metrics.stars': -1 })
-      .limit(50);
+    // Search across name and description fields
+    const tools = await AITool.find({
+      $or: [
+        { name: searchPattern },
+        { description: searchPattern }
+      ]
+    })
+    .sort({ 
+      'metrics.stars': -1,
+      'metrics.downloads': -1,
+      'metrics.citations': -1
+    })
+    .limit(12); // Limit to 12 results for better performance
 
     res.json(tools);
   } catch (error) {

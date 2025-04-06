@@ -17,6 +17,8 @@ const Dashboard = () => {
     huggingface: [],
     arxiv: []
   });
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -107,9 +109,23 @@ const Dashboard = () => {
     }
   };
 
-  const handleSearch = (query) => {
-    console.log('Searching for:', query);
-    // TODO: Implement search functionality
+  const handleSearch = async (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+      setError(null);
+      const results = await toolService.searchTools(query);
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Search error:', error);
+      setError(error.message);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const renderToolsColumn = (tools, source, icon) => (
@@ -153,6 +169,46 @@ const Dashboard = () => {
         titleClassName="text-5xl md:text-6xl font-extrabold"
         onSearch={handleSearch}
       />
+      
+      {searchResults.length > 0 && (
+        <section className="container mx-auto px-4 py-8">
+          <TextShimmer
+            as="h2"
+            className="text-2xl font-bold text-center mb-8"
+          >
+            Search Results
+          </TextShimmer>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {searchResults.map((tool) => (
+              <AIToolCard
+                key={tool._id}
+                name={tool.name}
+                description={tool.description}
+                url={tool.url}
+                source={tool.source}
+                type={tool.type}
+                metrics={{
+                  stars: tool.metrics?.stars || 0,
+                  downloads: tool.metrics?.downloads || 0,
+                  citations: tool.metrics?.citations || 0
+                }}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {isSearching && (
+        <div className="flex justify-center items-center py-8">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        </div>
+      )}
+
+      {error && (
+        <div className="text-center text-red-400 py-4">
+          <p>Error performing search: {error}</p>
+        </div>
+      )}
       
       <div className="container mx-auto px-4 py-4 flex justify-center space-x-4">
         {isSubscribed ? (

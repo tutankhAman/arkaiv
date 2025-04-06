@@ -13,6 +13,18 @@ export const toolService = {
     return response.json();
   },
 
+  async searchTools(query) {
+    const response = await fetch(`${API_URL}/search?query=${encodeURIComponent(query)}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    if (!response.ok) {
+      throw new Error('Failed to perform search');
+    }
+    return response.json();
+  },
+
   async getToolCount() {
     const response = await fetch(`${API_URL}/tools/count`, {
       headers: {
