@@ -52,18 +52,18 @@ const Navbar = () => {
             </button>
 
             {isProfileOpen && (
-              <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+              <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-black/40 backdrop-blur-lg border border-white/10">
                 <div className="py-1" role="menu" aria-orientation="vertical">
                   <Link
                     to="/profile"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="block px-4 py-2 text-sm text-white hover:bg-white/10 text-center transition-colors duration-200"
                     role="menuitem"
                   >
                     Profile
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="block w-full text-center px-4 py-2 text-sm text-white hover:bg-white/10 transition-colors duration-200"
                     role="menuitem"
                   >
                     Logout
