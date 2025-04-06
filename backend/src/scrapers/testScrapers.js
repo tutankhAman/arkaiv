@@ -1,3 +1,4 @@
+// Test script for verifying scraper functionality
 const scrapeGitHub = require('./githubScraper');
 const scrapeHuggingFace = require('./huggingfaceScraper');
 const scrapeArXiv = require('./arxivScraper');
@@ -5,7 +6,7 @@ const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
 
-// Improved environment loading
+// Load environment variables with fallback paths
 const envPath = path.resolve(__dirname, '../.env');
 if (fs.existsSync(envPath)) {
   console.log(`Loading environment from: ${envPath}`);
@@ -28,7 +29,7 @@ if (fs.existsSync(envPath)) {
  */
 async function testScrapers() {
   try {
-    // Check MongoDB URI
+    // Validate MongoDB connection settings
     if (!process.env.MONGODB_URI) {
       console.error('ERROR: MONGODB_URI environment variable is not set!');
       console.log('Available environment variables:', Object.keys(process.env)
@@ -36,11 +37,11 @@ async function testScrapers() {
       throw new Error('MONGODB_URI environment variable is not set. Check your .env file.');
     }
     
-    // Log a redacted version of the URI for debugging
+    // Log redacted MongoDB URI for security
     const redactedUri = process.env.MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@');
     console.log(`Connecting to MongoDB: ${redactedUri}`);
     
-    // Connect to MongoDB with improved options
+    // Connect to MongoDB with optimized settings
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -52,7 +53,7 @@ async function testScrapers() {
     console.log('Connected to MongoDB successfully!');
     console.log('Starting scraper tests...\n');
 
-    // Test GitHub Scraper
+    // Test and validate GitHub scraper
     console.log('Testing GitHub Scraper...');
     const githubResults = await scrapeGitHub();
     console.log(`GitHub Scraper Results: ${githubResults.length} repositories found`);
@@ -61,7 +62,7 @@ async function testScrapers() {
     }
     console.log('\n');
 
-    // Test Hugging Face Scraper
+    // Test and validate HuggingFace scraper
     console.log('Testing Hugging Face Scraper...');
     const huggingfaceResults = await scrapeHuggingFace();
     console.log(`Hugging Face Scraper Results: ${huggingfaceResults.length} models found`);
@@ -70,7 +71,7 @@ async function testScrapers() {
     }
     console.log('\n');
 
-    // Test arXiv Scraper
+    // Test and validate arXiv scraper
     console.log('Testing arXiv Scraper...');
     const arxivResults = await scrapeArXiv();
     console.log(`arXiv Scraper Results: ${arxivResults.length} papers found`);
@@ -79,12 +80,12 @@ async function testScrapers() {
     }
     console.log('\n');
 
-    // Verify data in database
+    // Verify scraped data in database
     const AITool = mongoose.model('AITool');
     const totalTools = await AITool.countDocuments();
     console.log(`Total tools in database: ${totalTools}`);
 
-    // Get sample tools from each source
+    // Get sample entries from each source for verification
     const githubTools = await AITool.find({ source: 'GitHub' }).limit(1);
     const huggingfaceTools = await AITool.find({ source: 'HuggingFace' }).limit(1);
     const arxivTools = await AITool.find({ source: 'arXiv' }).limit(1);
@@ -114,5 +115,5 @@ async function testScrapers() {
   }
 }
 
-// Run the tests
+// Execute the test suite
 testScrapers();

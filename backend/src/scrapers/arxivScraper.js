@@ -1,3 +1,4 @@
+// Scraper for arXiv AI research papers using Playwright
 const { chromium } = require('playwright');
 const AITool = require('../models/AITool');
 
@@ -6,6 +7,7 @@ const AITool = require('../models/AITool');
  * @returns {Promise<Array>} Array of scraped papers
  */
 async function scrapeArXiv() {
+  // Initialize browser with custom user agent
   const browser = await chromium.launch({ 
     headless: true,
   });
@@ -16,6 +18,7 @@ async function scrapeArXiv() {
   const results = [];
 
   try {
+    // Navigate to arXiv search page for AI papers
     console.log('Navigating to arXiv search page...');
     await page.goto('https://arxiv.org/search/cs?query=artificial+intelligence+machine+learning+deep+learning&searchtype=all&abstracts=show&order=-announced_date_first&size=50', {
       waitUntil: 'networkidle',
@@ -25,7 +28,7 @@ async function scrapeArXiv() {
     console.log('Waiting for results to load...');
     await page.waitForSelector('li.arxiv-result', { timeout: 60000 });
     
-    // Get paper entries using page.evaluate for better performance
+    // Extract paper information from search results
     const papers = await page.evaluate(() => {
       const items = document.querySelectorAll('li.arxiv-result');
       const results = [];
@@ -41,12 +44,12 @@ async function scrapeArXiv() {
         const url = linkElement ? `https://arxiv.org${linkElement.getAttribute('href').replace('https://arxiv.org', '')}` : '';
         if (!url) return;
 
-        // Get citation count (if available)
+        // Parse citation count from text
         const citationsElement = item.querySelector('span.citation-count');
         const citations = citationsElement ? 
           parseInt(citationsElement.textContent.match(/(\d+)\s+citations?/)?.[1] || '0') : 0;
 
-        // Get abstract
+        // Extract paper abstract
         const abstractElement = item.querySelector('p.abstract');
         const description = abstractElement ? 
           abstractElement.textContent.trim().replace('Abstract:', '').trim() : '';
@@ -61,7 +64,7 @@ async function scrapeArXiv() {
 
     console.log(`Found ${papers.length} papers`);
 
-    // Process papers
+    // Process and format paper data
     for (const paper of papers) {
       console.log(`Processing paper: ${paper.title}`);
       console.log(`Adding paper: ${paper.title} with ${paper.citations} citations`);
@@ -85,7 +88,7 @@ async function scrapeArXiv() {
     
     console.log(`Successfully processed ${results.length} papers`);
     
-    // Save to database
+    // Save papers to database
     for (const result of results) {
       await AITool.findOneAndUpdate(
         { url: result.url },

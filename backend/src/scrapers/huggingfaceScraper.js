@@ -1,3 +1,4 @@
+// Scraper for HuggingFace AI models using Playwright
 const { chromium } = require('playwright');
 const AITool = require('../models/AITool');
 
@@ -6,6 +7,7 @@ const AITool = require('../models/AITool');
  * @returns {Promise<Array>} Array of scraped models
  */
 async function scrapeHuggingFace() {
+  // Initialize browser with custom user agent
   const browser = await chromium.launch({ 
     headless: true,
   });
@@ -16,6 +18,7 @@ async function scrapeHuggingFace() {
   const results = [];
 
   try {
+    // Navigate to HuggingFace models page
     console.log('Navigating to Hugging Face models page...');
     await page.goto('https://huggingface.co/models?pipeline_tag=text-classification&sort=downloads', {
       waitUntil: 'networkidle',
@@ -25,7 +28,7 @@ async function scrapeHuggingFace() {
     console.log('Waiting for results to load...');
     await page.waitForSelector('article.overview-card-wrapper', { timeout: 60000 });
 
-    // Get model cards
+    // Extract model information from cards
     const models = await page.$$('article.overview-card-wrapper');
     console.log(`Found ${models.length} models`);
 
@@ -41,7 +44,7 @@ async function scrapeHuggingFace() {
         const url = await linkElement.getAttribute('href');
         const name = await model.$eval('h4', el => el.textContent.trim());
         
-        // Get downloads count - using a more generic selector
+        // Parse downloads count with unit conversion
         const statsElement = await model.$('div[class*="text-gray"]');
         let downloads = 0;
         
@@ -69,7 +72,7 @@ async function scrapeHuggingFace() {
           }
         }
 
-        // Get description
+        // Get model description
         const descriptionElement = await model.$('p[class*="text-gray"]');
         const description = descriptionElement ? 
           (await descriptionElement.textContent()).trim() : '';
@@ -91,7 +94,7 @@ async function scrapeHuggingFace() {
             }]
           });
 
-          // Stop after getting 50 models
+          // Limit to top 50 models
           if (results.length >= 50) {
             break;
           }
@@ -104,7 +107,7 @@ async function scrapeHuggingFace() {
 
     console.log(`Successfully processed ${results.length} models`);
 
-    // Save to database
+    // Save models to database
     for (const result of results) {
       await AITool.findOneAndUpdate(
         { url: result.url },
