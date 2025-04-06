@@ -183,7 +183,7 @@ const Discover = () => {
             ) : (
               <div className="space-y-4">
                 {currentTools.map((tool) => {
-                  if (selectedSource === 'huggingface') {
+                  if (selectedSource === 'huggingface' || selectedSource === 'github') {
                     return (
                       <HuggingFaceCard
                         key={tool._id}
@@ -192,7 +192,7 @@ const Discover = () => {
                         url={tool.url}
                         type={tool.type}
                         metrics={{
-                          likes: tool.metrics?.stars || 0,
+                          likes: selectedSource === 'github' ? tool.metrics?.stars || 0 : tool.metrics?.likes || 0,
                           downloads: tool.metrics?.downloads || 0
                         }}
                       />
