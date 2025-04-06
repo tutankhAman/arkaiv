@@ -5,21 +5,21 @@ const nodemailer = require('nodemailer');
 // Create a transporter for sending emails
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
+  port: 587,
+  secure: false, // true for 465, false for other ports
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD
   },
-  debug: true, // Enable debug logging
-  logger: true // Enable logger
+  tls: {
+    rejectUnauthorized: false
+  }
 });
 
 // Verify transporter configuration on startup
 transporter.verify((error, success) => {
   if (error) {
     console.error('SMTP Connection Error:', error);
-    // Log detailed error information
     console.error('Email Configuration:', {
       user: process.env.EMAIL_USER,
       hasPassword: !!process.env.EMAIL_PASSWORD,
@@ -62,7 +62,7 @@ const sendEmail = async (mailOptions) => {
           throw error;
         }
         console.log(`Retrying email send (${retries} attempts left)...`);
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
     }
   } catch (error) {
