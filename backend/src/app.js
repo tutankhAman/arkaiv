@@ -157,6 +157,66 @@ app.get('/api/tools', auth, async (req, res) => {
   }
 });
 
+// New endpoint for getting all tools without the top 6 limitation
+app.get('/api/tools/all', auth, async (req, res) => {
+  try {
+    console.log('Fetching all tools from database...');
+    
+    // Fetch all tools from each source
+    const [allGithubTools, allHuggingfaceTools, allArxivTools] = await Promise.all([
+      AITool.find({ source: 'GitHub' }).select('name description url metrics type'),
+      AITool.find({ source: 'HuggingFace' }).select('name description url metrics type'),
+      AITool.find({ source: 'arXiv' }).select('name description url metrics type')
+    ]);
+
+    console.log(`Found ${allGithubTools.length} GitHub tools, ${allHuggingfaceTools.length} HuggingFace tools, and ${allArxivTools.length} arXiv tools`);
+
+    // Add descriptions for tools that don't have them
+    const addDescriptions = (tools, source) => {
+      return tools.map(tool => {
+        if (!tool.description || tool.description.trim() === '') {
+          if (source === 'GitHub') {
+            const repoName = tool.url.split('/').slice(-2).join('/');
+            tool.description = `A popular GitHub repository ${repoName} focused on AI development. This repository has gained significant traction in the AI community.`;
+          } else if (source === 'HuggingFace') {
+            const modelName = tool.url.split('/').pop();
+            const formattedName = modelName.replace(/-/g, ' ').replace(/_/g, ' ');
+            tool.description = `A state-of-the-art ${formattedName} model available on HuggingFace. This model has been widely adopted by the AI community for various applications.`;
+          } else if (source === 'arXiv') {
+            const paperId = tool.url.split('/').pop();
+            tool.description = `A groundbreaking research paper (ID: ${paperId}) published on arXiv. This paper presents significant advancements in the field of artificial intelligence.`;
+          }
+        }
+        return tool;
+      });
+    };
+
+    // Sort tools by their respective metrics and add descriptions
+    const githubTools = addDescriptions(allGithubTools, 'GitHub')
+      .sort((a, b) => (b.metrics?.stars || 0) - (a.metrics?.stars || 0));
+
+    const huggingfaceTools = addDescriptions(allHuggingfaceTools, 'HuggingFace')
+      .sort((a, b) => (b.metrics?.downloads || 0) - (a.metrics?.downloads || 0));
+
+    const arxivTools = addDescriptions(allArxivTools, 'arXiv')
+      .sort((a, b) => (b.metrics?.citations || 0) - (a.metrics?.citations || 0));
+
+    console.log('Returning all tools from each source with enhanced descriptions');
+    
+    res.json({
+      github: githubTools,
+      huggingface: huggingfaceTools,
+      arxiv: arxivTools
+    });
+  } catch (error) {
+    console.error('Error fetching tools:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch tools',
+      details: error.message 
+    });
+  }
+});
+
 // New endpoint for getting total tool counts
 app.get('/api/tools/count', async (req, res) => {
   try {
