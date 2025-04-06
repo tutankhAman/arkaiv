@@ -23,17 +23,31 @@ const Discover = () => {
         setIsLoading(true);
         setError(null);
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:3000/api/tools/all', {
+        const apiUrl = import.meta.env.VITE_API_URL;
+        
+        if (!apiUrl) {
+          throw new Error('API URL is not configured');
+        }
+
+        const response = await fetch(`${apiUrl}/tools/all`, {
+          method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
           }
         });
-        if (!response.ok) throw new Error('Failed to fetch tools');
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
         setTools(data);
       } catch (error) {
         console.error('Error fetching tools:', error);
-        setError(error.message);
+        setError(error.message || 'Failed to connect to the server. Please try again later.');
         setTools({
           github: [],
           huggingface: [],
