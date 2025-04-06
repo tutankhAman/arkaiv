@@ -3,6 +3,7 @@
 import * as React from "react"
 import { motion, HTMLMotionProps } from "framer-motion"
 import { cn } from "../../lib/utils"
+import { toolService } from "../../services/toolService"
 
 interface StatsProps extends Omit<HTMLMotionProps<"div">, "ref"> {
   className?: string
@@ -28,14 +29,14 @@ const Stats = React.forwardRef<HTMLDivElement, StatsProps>(
       const fetchStats = async () => {
         try {
           // Fetch total models count
-          const countResponse = await fetch('http://localhost:3000/api/tools/count')
-          if (!countResponse.ok) {
-            throw new Error(`Count API error: ${countResponse.status}`)
-          }
-          const countData = await countResponse.json() as ToolsCount
+          const countData = await toolService.getToolCount()
           
           // Fetch latest digest for new tools count
-          const digestResponse = await fetch('http://localhost:3000/api/digest/latest')
+          const digestResponse = await fetch(`${import.meta.env.VITE_API_URL}/digest/latest`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          })
           if (!digestResponse.ok) {
             throw new Error(`Digest API error: ${digestResponse.status}`)
           }

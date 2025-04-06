@@ -7,6 +7,7 @@ import SubscriptionModal from '../components/ui/subscription-modal';
 import { Button } from '../components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Notification } from '../components/ui/notification';
+import { toolService } from '../services/toolService';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -37,15 +38,7 @@ const Dashboard = () => {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch('http://localhost:3000/api/tools', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        if (!response.ok) {
-          throw new Error('Failed to fetch tools');
-        }
-        const data = await response.json();
+        const data = await toolService.getTrendingTools();
         setTrendingTools(data);
       } catch (error) {
         console.error('Error fetching trending tools:', error);
@@ -57,7 +50,11 @@ const Dashboard = () => {
 
     const checkSubscription = async () => {
       try {
-        const response = await fetch(`http://localhost:3001/api/subscription/status?email=${userData.email}`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/subscription/status?email=${userData.email}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
         if (response.ok) {
           const data = await response.json();
           setIsSubscribed(data.isSubscribed);
