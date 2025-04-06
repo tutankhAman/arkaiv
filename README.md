@@ -67,7 +67,7 @@ Follow these steps in order to run the project:
 
 1. Clear the database (optional, but recommended for fresh start):
    ```bash
-   cd backend/src/scripts
+   cd backend/scripts
    node clearDb.js
    ```
 
