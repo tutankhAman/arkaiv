@@ -1,7 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const cors = require('cors');
 const { scheduleScrapingTasks } = require('./scheduler');
 const DailyDigest = require('./models/DailyDigest');
 const AITool = require('./models/AITool');
@@ -16,13 +15,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
-app.use(express.json());
 app.use(cors({
-  origin: 'http://localhost:5173', // Allow requests from frontend
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.FRONTEND_URL 
+    : 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
+app.use(express.json());
 
 // Log environment variables (without sensitive data)
 console.log('Environment:', {
