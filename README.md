@@ -1,39 +1,62 @@
-# arkaiv
+# Arkaiv - AI Tool Discovery Platform
 
-Arkaiv is an AI tool discovery platform that tracks, summarizes, and displays the latest AI tools and models from GitHub, Hugging Face, and arXiv papers.
+Arkaiv is an automated platform that tracks, summarizes, and displays the latest AI tools and models from GitHub, Hugging Face, and arXiv papers. It helps researchers, developers, and enthusiasts stay up-to-date with the rapidly evolving field of artificial intelligence.
 
-## Project Overview
+## 🚀 Features
 
-Arkaiv automatically scrapes data from popular AI resources, analyzes trends, and generates daily digests of the most important developments in the AI ecosystem. The platform helps researchers, developers, and enthusiasts stay up-to-date with the rapidly evolving field of artificial intelligence.
-
-## Features Implemented
-
-- **Multi-Source Data Scraping**:
+### Data Collection & Analysis
+- **Multi-Source Data Aggregation**
   - GitHub repositories (sorted by stars)
   - Hugging Face models (sorted by downloads)
   - arXiv papers (sorted by citations)
+  - Real-time updates via WebSocket
 
-- **Daily Digest Generation**:
-  - Automated summaries of new AI tools and models
-  - Top entries from each source
-  - Metrics tracking (stars, downloads, citations)
-  - Formatted markdown output for easy sharing
+### AI-Powered Summarization
+- Automated summaries of new AI tools and models
+- BART-Large-CNN powered text extraction
+- Cached summaries for efficiency
+- Fallback to OpenAI when needed
 
-- **MongoDB Integration**:
-  - Persistent storage of AI tools and models
-  - Historical tracking of metrics
-  - Efficient querying and filtering
+### Dashboard & Visualization
+- Interactive trend analysis
+- Real-time metrics tracking
+- Source-specific filtering
+- Responsive mobile layout
 
-## Getting Started
+### Digest System
+- Daily/weekly email subscriptions
+- Customizable digest preferences
+- Email tracking and analytics
+- Unsubscribe management
+
+## 🛠️ Tech Stack
+
+### Backend
+- **Node.js** with Express
+- **MongoDB** for data storage
+- **WebSocket** for real-time updates
+- **Playwright** for web scraping
+
+### Frontend
+- **Vite** for build tooling
+- **React** for UI components
+- **Chart.js** for visualizations
+- **React-Query** for data fetching
+
+### AI & Processing
+- **Hugging Face Inference API**
+- **OpenAI API** (fallback)
+- **BART-Large-CNN** for summarization
+
+## 📦 Installation
 
 ### Prerequisites
-
 - Node.js (v14 or higher)
 - MongoDB Atlas account or local MongoDB instance
-- Hugging Face API key (for summarization)
-- OpenAI API key (as fallback for summarization)
+- Hugging Face API key
+- OpenAI API key (optional, for fallback)
 
-### Installation and Setup
+### Setup
 
 1. Clone the repository:
    ```bash
@@ -41,170 +64,191 @@ Arkaiv automatically scrapes data from popular AI resources, analyzes trends, an
    cd arkaiv
    ```
 
-2. Install backend dependencies:
+2. Install dependencies:
    ```bash
+   # Backend
    cd backend
+   npm install
+   
+   # Frontend
+   cd ../frontend
    npm install
    ```
 
-3. Install Playwright for web scraping:
-   ```bash
-   npx playwright install
+3. Configure environment variables:
+   Create `.env` files in both backend and frontend directories:
    ```
-
-4. Configure environment variables:
-   Create a `.env` file in the backend directory with the following variables:
-   ```
+   # Backend .env
    PORT=3000
    MONGODB_URI=your_mongodb_connection_string
    HUGGINGFACE_API_KEY=your_huggingface_api_key
    OPENAI_API_KEY=your_openai_api_key
+   
+   # Frontend .env
+   VITE_API_URL=http://localhost:3000
    ```
 
-### Running the Project
-
-Follow these steps in order to run the project:
-
-1. Clear the database (optional, but recommended for fresh start):
+4. Install Playwright for web scraping:
    ```bash
-   cd backend/scripts
-   node clearDb.js
+   cd backend
+   npx playwright install
    ```
 
-2. Test the scrapers:
+## 🚀 Running the Project
+
+### Development Mode
+
+1. Start the backend server:
    ```bash
-   cd ../src/scrapers
-   node testScrapers.js
+   cd backend
+   npm run dev
    ```
 
-3. Generate a digest:
+2. Start the frontend development server:
    ```bash
-   cd ../digests
-   node generateDigestNow.js
+   cd frontend
+   npm run dev
    ```
 
-## Project Structure
+### Production Mode
+
+1. Build the frontend:
+   ```bash
+   cd frontend
+   npm run build
+   ```
+
+2. Start the production server:
+   ```bash
+   cd backend
+   npm start
+   ```
+
+## 📁 Project Structure
 
 ```
 arkaiv/
 ├── backend/
 │   ├── src/
 │   │   ├── api/             # API routes and controllers
-│   │   │   ├── routes/      # Express route definitions
-│   │   │   └── controllers/ # Route handlers and business logic
-│   │   ├── config/          # Configuration files and environment setup
-│   │   ├── models/          # MongoDB schemas and database models
-│   │   │   ├── AITool.js    # Schema for AI tools from all sources
-│   │   │   └── DailyDigest.js # Schema for daily digest documents
+│   │   ├── config/          # Configuration files
+│   │   ├── models/          # MongoDB schemas
 │   │   ├── scrapers/        # Data collection modules
-│   │   │   ├── githubScraper.js    # Scrapes GitHub repositories
-│   │   │   ├── huggingfaceScraper.js # Scrapes Hugging Face models
-│   │   │   ├── arxivScraper.js     # Scrapes arXiv papers
-│   │   │   └── testScrapers.js     # Tests all scrapers
-│   │   ├── digests/         # Digest generation and formatting
-│   │   │   ├── generateDigest.js       # Main digest generation logic
-│   │   │   ├── generateDigestNow.js    # Script to generate digest immediately
-│   │   │   ├── generateDigestDocument.js # Document formatting utilities
-│   │   │   └── digestService.js        # Core digest generation service
-│   │   ├── scripts/         # Utility and runner scripts
-│   │   │   ├── clearDb.js   # Script to clear the database
-│   │   │   └── runScrapers.js # Script to run all scrapers
-│   │   ├── tests/           # Test suites and test utilities
-│   │   └── app.js           # Express API server entry point
-│   ├── digests/             # Generated daily digest markdown files
-│   ├── .env                 # Environment variables and configuration
-│   ├── package.json         # Project dependencies and scripts
-│   └── package-lock.json    # Lock file for dependencies
-└── README.md
+│   │   ├── digests/         # Digest generation
+│   │   ├── scripts/         # Utility scripts
+│   │   └── tests/           # Test suites
+├── frontend/
+│   ├── src/
+│   │   ├── components/      # React components
+│   │   ├── pages/          # Page components
+│   │   ├── hooks/          # Custom hooks
+│   │   ├── utils/          # Utility functions
+│   │   └── styles/         # CSS modules
+└── docs/                   # Documentation
 ```
 
-### Directory and File Descriptions
+## 🔄 Data Flow
 
-#### Backend Structure
+The Arkaiv platform follows a streamlined data pipeline from collection to user delivery:
 
-- **src/api/**
-  - Contains all API-related code
-  - `routes/`: Defines API endpoints and URL patterns
-  - `controllers/`: Implements business logic for each route
+```mermaid
+graph TD
+    A[Daily Data Collection] --> B[Data Processing]
+    B --> C[AI Summarization]
+    C --> D[Storage & Analysis]
+    D --> E[User Delivery]
 
-- **src/config/**
-  - Configuration files and environment setup
-  - Handles loading of environment variables
-  - Defines application-wide settings
+    subgraph "Data Collection"
+        A1[GitHub Scraper] --> A
+        A2[Hugging Face Scraper] --> A
+        A3[arXiv Scraper] --> A
+    end
 
-- **src/models/**
-  - MongoDB schemas and database models
-  - `AITool.js`: Defines the schema for AI tools from all sources
-  - `DailyDigest.js`: Defines the schema for daily digest documents
+    subgraph "Processing & Storage"
+        B --> B1[Data Normalization]
+        B1 --> B2[MongoDB Storage]
+        B2 --> D
+    end
 
-- **src/scrapers/**
-  - Data collection modules for different sources
-  - `githubScraper.js`: Collects AI tools from GitHub repositories
-  - `huggingfaceScraper.js`: Collects models from Hugging Face
-  - `arxivScraper.js`: Collects papers from arXiv
-  - `testScrapers.js`: Tests all scrapers and verifies data collection
+    subgraph "AI Processing"
+        C --> C1[BART-Large-CNN]
+        C1 --> C2[Summary Generation]
+        C2 --> D
+    end
 
-- **src/digests/**
-  - Digest generation and formatting
-  - `generateDigest.js`: Main logic for generating daily digests
-  - `generateDigestNow.js`: Script to generate digest immediately
-  - `generateDigestDocument.js`: Utilities for formatting digest documents
-  - `digestService.js`: Core service for digest generation and summarization
+    subgraph "Delivery"
+        D --> E1[Email Digest]
+        D --> E2[Web Dashboard]
+        D --> E3[API Endpoints]
+    end
+```
 
-- **src/scripts/**
-  - Utility scripts for project management
-  - `clearDb.js`: Clears the database for fresh starts
-  - `runScrapers.js`: Runs all scrapers in sequence
+### Pipeline Stages
 
-- **src/tests/**
-  - Test suites and test utilities
-  - Contains test files for different components
-  - Includes test data and mock services
+1. **Data Collection (Daily)**
+   - Automated scraping of GitHub repositories
+   - Hugging Face model updates
+   - arXiv paper submissions
+   - Rate-limited API calls to prevent overload
 
-- **src/app.js**
-  - Main Express application entry point
-  - Sets up middleware and routes
-  - Initializes database connection
+2. **Data Processing**
+   - Normalization of data from different sources
+   - Extraction of key metrics (stars, downloads, citations)
+   - Metadata enrichment
+   - Duplicate detection
 
-#### Root Level Files
+3. **AI Summarization**
+   - Text extraction from READMEs and abstracts
+   - BART-Large-CNN powered summarization
+   - Key feature extraction
+   - Quality scoring
 
-- **digests/**
-  - Directory containing generated daily digest markdown files
-  - Each digest is named with its date (e.g., `digest_2024-04-05.md`)
+4. **Storage & Analysis**
+   - MongoDB storage with optimized indexes
+   - Trend analysis
+   - Metric tracking
+   - Historical data preservation
 
-- **.env**
-  - Environment configuration file
-  - Contains sensitive information and API keys
-  - Not committed to version control
+5. **User Delivery**
+   - Daily email digests
+   - Real-time web dashboard updates
+   - REST API access
+   - WebSocket notifications
 
-- **package.json**
-  - Project metadata and dependencies
-  - Defines npm scripts and project configuration
-  - Lists all required packages
+## 🧪 Testing
 
-- **package-lock.json**
-  - Lock file for npm dependencies
-  - Ensures consistent dependency versions
+Run the test suite:
+```bash
+# Backend tests
+cd backend
+npm test
 
-## Current Status
+# Frontend tests
+cd frontend
+npm test
+```
 
-The project has implemented the core data pipeline for collecting and storing AI tool information. The digest generation system is working and producing formatted reports of the most notable tools in the ecosystem.
+## 📝 Contributing
 
-### What's Working
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-- ✅ GitHub, Hugging Face, and arXiv scrapers
-- ✅ MongoDB data storage with appropriate schemas
-- ✅ Daily digest generation with data from all sources
-- ✅ Fallback summarization when API keys are unavailable
-
-### Next Steps
-
-- 🔲 Frontend dashboard for visualizing AI tool trends
-- 🔲 Email subscription system for digest delivery
-- 🔲 Search functionality with filtering options
-- 🔲 API endpoints for accessing tool data
-- 🔲 Trend analysis and visualization
-
-## License
+## 📄 License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## 🤝 Support
+
+For support, please open an issue in the GitHub repository or contact the maintainers.
+
+## 📈 Roadmap
+
+- [ ] Enhanced trend analysis
+- [ ] Advanced search capabilities
+- [ ] User authentication system
+- [ ] API rate limiting improvements
+- [ ] Additional data sources
+- [ ] Mobile app development
