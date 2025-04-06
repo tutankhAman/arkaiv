@@ -176,7 +176,7 @@ async function generateDailyDigest() {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
   });
 
   // Generate formatted document with improved formatting

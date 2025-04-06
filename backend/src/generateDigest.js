@@ -20,6 +20,7 @@ async function main() {
     console.log('GitHub:', digest.topEntries.github);
     console.log('HuggingFace:', digest.topEntries.huggingface);
     console.log('arXiv:', digest.topEntries.arxiv);
+    console.log();
 
   } catch (error) {
     console.error('Error:', error);

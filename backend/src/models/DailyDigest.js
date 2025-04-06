@@ -18,7 +18,7 @@ const DailyDigestSchema = new mongoose.Schema({
     type: Date,
     required: true,
     default: Date.now,
-    index: true
+    index: true,
   },
   totalTools: {
     type: Number,
