@@ -4,12 +4,15 @@ import * as React from "react"
 import { motion } from "framer-motion"
 import { cn } from "../../lib/utils"
 import { TextShimmer } from "./text-shimmer"
+import { Stats } from "./stats"
+import { SearchBar } from "./search-bar"
 
 interface HeroProps extends React.HTMLAttributes<HTMLElement> {
   gradient?: boolean
   blur?: boolean
   title: string
   titleClassName?: string
+  onSearch?: (query: string) => void
 }
 
 const Hero = React.forwardRef<HTMLElement, HeroProps>(
@@ -20,6 +23,7 @@ const Hero = React.forwardRef<HTMLElement, HeroProps>(
       blur = true,
       title,
       titleClassName,
+      onSearch,
       ...props
     },
     ref,
@@ -28,7 +32,7 @@ const Hero = React.forwardRef<HTMLElement, HeroProps>(
       <section
         ref={ref}
         className={cn(
-          "relative z-0 flex h-[40vh] w-full flex-col items-center justify-start overflow-hidden rounded-md bg-zinc-950",
+          "relative z-0 flex min-h-[60vh] w-full flex-col items-center justify-start overflow-hidden rounded-md bg-zinc-950",
           className,
         )}
         {...props}
@@ -103,19 +107,24 @@ const Hero = React.forwardRef<HTMLElement, HeroProps>(
           viewport={{ once: true }}
           transition={{ ease: "easeInOut", delay: 0.3, duration: 0.8 }}
           whileInView={{ y: 0, opacity: 1 }}
-          className="relative z-50 container flex justify-center flex-1 flex-col px-5 md:px-10 mt-16"
+          className="relative z-50 container flex justify-center flex-1 flex-col px-5 md:px-10 py-16"
         >
-          <div className="flex flex-col items-center text-center">
+          <div className="flex flex-col items-center text-center space-y-8">
             <TextShimmer
               as="h1"
               duration={1.2}
               className={cn(
-                "text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-400",
+                "text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-400 font-heading",
                 titleClassName,
               )}
             >
               {title}
             </TextShimmer>
+            <p className="text-lg text-gray-400/80 font-light tracking-wide font-sans">
+              an archive for the latest AIs out there
+            </p>
+            <Stats />
+            <SearchBar onSearch={onSearch} />
           </div>
         </motion.div>
       </section>
