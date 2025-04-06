@@ -73,7 +73,7 @@ Follow these steps in order to run the project:
 
 2. Test the scrapers:
    ```bash
-   cd ../scrapers
+   cd ../src/scrapers
    node testScrapers.js
    ```
 
