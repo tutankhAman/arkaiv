@@ -8,8 +8,58 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD
+  },
+  tls: {
+    rejectUnauthorized: false // Only for development, remove in production
+  },
+  pool: true,
+  maxConnections: 1,
+  rateDelta: 1000, // 1 second
+  rateLimit: 3 // 3 emails per second
+});
+
+// Verify transporter configuration on startup
+transporter.verify((error, success) => {
+  if (error) {
+    console.error('SMTP Connection Error:', error);
+  } else {
+    console.log('SMTP Server is ready to send emails');
   }
 });
+
+const sendEmail = async (mailOptions) => {
+  try {
+    // Verify SMTP connection before sending
+    await transporter.verify();
+    
+    // Send email with retry logic
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Email sent successfully:', {
+          messageId: info.messageId,
+          to: mailOptions.to,
+          subject: mailOptions.subject
+        });
+        return true;
+      } catch (error) {
+        retries--;
+        if (retries === 0) throw error;
+        console.log(`Retrying email send (${retries} attempts left)...`);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+      }
+    }
+  } catch (error) {
+    console.error('Email sending failed after all retries:', {
+      error: error.message,
+      code: error.code,
+      response: error.response,
+      to: mailOptions.to
+    });
+    return false;
+  }
+};
 
 exports.subscribe = async (req, res) => {
   try {
@@ -40,63 +90,48 @@ exports.subscribe = async (req, res) => {
     console.log('New subscription created:', email);
 
     // Send confirmation email
-    try {
-      console.log('Sending confirmation email to:', email);
-      const mailOptions = {
-        from: 'work.arkaiv@gmail.com',
-        to: email,
-        subject: 'Subscription Confirmation - arkaiv AI Digest',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #4F46E5; text-align: center;">Welcome to arkaiv AI Digest!</h1>
-            <p>Hello ${user.username},</p>
-            <p>Thank you for subscribing to our daily AI digest service. We're excited to have you on board!</p>
-            
-            <div style="background-color: #F3F4F6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h2 style="color: #1F2937;">What to expect:</h2>
-              <ul style="list-style-type: none; padding: 0;">
-                <li style="margin: 10px 0;">📧 Daily digest of new AI tools and their summaries</li>
-                <li style="margin: 10px 0;">📚 Author digest with latest research updates</li>
-                <li style="margin: 10px 0;">📊 Weekly roundup of trending AI projects</li>
-              </ul>
-            </div>
-
-            <p>Based on your preferences, we'll focus on: <strong>${user.preferences?.join(', ') || 'all AI topics'}</strong></p>
-            
-            <p>Your first digest will arrive tomorrow at 8:00 AM.</p>
-            
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #E5E7EB;">
-              <p style="font-size: 14px; color: #6B7280;">
-                If you wish to unsubscribe at any time, please click the unsubscribe link in any of our emails.
-              </p>
-            </div>
+    const mailOptions = {
+      from: 'work.arkaiv@gmail.com',
+      to: email,
+      subject: 'Subscription Confirmation - arkaiv AI Digest',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #4F46E5; text-align: center;">Welcome to arkaiv AI Digest!</h1>
+          <p>Hello ${user.username},</p>
+          <p>Thank you for subscribing to our daily AI digest service. We're excited to have you on board!</p>
+          
+          <div style="background-color: #F3F4F6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h2 style="color: #1F2937;">What to expect:</h2>
+            <ul style="list-style-type: none; padding: 0;">
+              <li style="margin: 10px 0;">📧 Daily digest of new AI tools and their summaries</li>
+              <li style="margin: 10px 0;">📚 Author digest with latest research updates</li>
+              <li style="margin: 10px 0;">📊 Weekly roundup of trending AI projects</li>
+            </ul>
           </div>
-        `
-      };
 
-      // Verify the transporter configuration
-      await transporter.verify((error, success) => {
-        if (error) {
-          console.error('SMTP Connection Error:', error);
-          throw new Error('SMTP connection failed: ' + error.message);
-        }
-        console.log('SMTP Server is ready to send emails');
-      });
+          <p>Based on your preferences, we'll focus on: <strong>${user.preferences?.join(', ') || 'all AI topics'}</strong></p>
+          
+          <p>Your first digest will arrive tomorrow at 8:00 AM.</p>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #E5E7EB;">
+            <p style="font-size: 14px; color: #6B7280;">
+              If you wish to unsubscribe at any time, please click the unsubscribe link in any of our emails.
+            </p>
+          </div>
+        </div>
+      `
+    };
 
-      const info = await transporter.sendMail(mailOptions);
-      console.log('Email sent successfully:', info.messageId);
-    } catch (emailError) {
-      console.error('Detailed email error:', {
-        message: emailError.message,
-        stack: emailError.stack,
-        code: emailError.code,
-        response: emailError.response
-      });
-      // Don't fail the subscription if email fails, but log the error
-      console.error('Failed to send confirmation email, but subscription was created');
+    const emailSent = await sendEmail(mailOptions);
+    if (!emailSent) {
+      console.error('Failed to send confirmation email to:', email);
+      // Don't fail the subscription, but log the error
     }
 
-    res.status(201).json({ message: 'Successfully subscribed to AI digest' });
+    res.status(201).json({ 
+      message: 'Successfully subscribed to AI digest',
+      emailSent: emailSent
+    });
   } catch (error) {
     console.error('Subscription error:', error);
     res.status(500).json({ 
