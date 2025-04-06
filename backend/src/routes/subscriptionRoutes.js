@@ -12,6 +12,7 @@ const handleErrors = (err, req, res, next) => {
 };
 
 router.post('/subscribe', subscriptionController.subscribe);
+router.post('/unsubscribe', subscriptionController.unsubscribe);
 router.get('/status', subscriptionController.checkStatus);
 
 // Apply error handling middleware

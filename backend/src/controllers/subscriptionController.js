@@ -129,4 +129,65 @@ exports.sendDailyDigest = async () => {
   } catch (error) {
     console.error('Error sending daily digest:', error);
   }
+};
+
+exports.unsubscribe = async (req, res) => {
+  try {
+    console.log('Unsubscription request received:', req.body);
+    
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+    
+    // Check if subscription exists
+    const subscription = await Subscription.findOne({ email });
+    if (!subscription) {
+      console.log('No subscription found:', email);
+      return res.status(404).json({ message: 'No active subscription found' });
+    }
+
+    // Delete the subscription
+    await Subscription.deleteOne({ email });
+    console.log('Subscription deleted:', email);
+
+    // Send confirmation email
+    try {
+      console.log('Sending unsubscription confirmation email to:', email);
+      await transporter.sendMail({
+        from: 'work.arkaiv@gmail.com',
+        to: email,
+        subject: 'Unsubscribed from arkaiv AI Digest',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #4F46E5; text-align: center;">You've been unsubscribed</h1>
+            <p>Hello,</p>
+            <p>You have successfully unsubscribed from arkaiv's daily AI digest service.</p>
+            
+            <div style="background-color: #F3F4F6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <p>We're sorry to see you go! If you change your mind, you can always resubscribe through your dashboard.</p>
+            </div>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #E5E7EB;">
+              <p style="font-size: 14px; color: #6B7280;">
+                If you didn't request this unsubscription, please contact our support team.
+              </p>
+            </div>
+          </div>
+        `
+      });
+      console.log('Unsubscription confirmation email sent successfully to:', email);
+    } catch (emailError) {
+      console.error('Error sending unsubscription confirmation email:', emailError);
+      // Don't fail the unsubscription if email fails
+    }
+
+    res.status(200).json({ message: 'Successfully unsubscribed from AI digest' });
+  } catch (error) {
+    console.error('Unsubscription error:', error);
+    res.status(500).json({ 
+      message: 'Error unsubscribing from AI digest',
+      error: error.message 
+    });
+  }
 }; 
