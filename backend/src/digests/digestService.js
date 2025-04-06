@@ -60,35 +60,123 @@ async function retryWithBackoff(fn, retries = 3, baseDelayMs = 300, factor = 2) 
 function createLocalSummary(text) {
   // Extract key stats and information
   const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
+  
+  // Extract statistics
   const totalTools = lines.find(line => line.startsWith('Total AI Tools:'))?.split(':')[1]?.trim() || 'N/A';
   const newTools = lines.find(line => line.startsWith('New Tools Today:'))?.split(':')[1]?.trim() || 'N/A';
   
-  // Find sections
-  const gitHubSection = text.indexOf('Top GitHub Tools:');
-  const huggingFaceSection = text.indexOf('Top HuggingFace Models:');
-  const arxivSection = text.indexOf('Top arXiv Papers:');
+  // Find and extract top entries
+  const gitHubTools = [];
+  const huggingFaceModels = [];
+  const arxivPapers = [];
   
-  // Create a concise summary manually
-  return `The database contains ${totalTools} AI tools with ${newTools} new additions today. ` +
-         `The digest features the top GitHub repositories, HuggingFace models, and arXiv papers ` +
-         `based on stars, downloads, and citations respectively. Key areas covered include AI resources, ` +
-         `language detection, sentiment analysis, and neural network architectures.`;
+  let currentSection = null;
+  for (const line of lines) {
+    if (line.startsWith('Top GitHub Tools:')) {
+      currentSection = 'github';
+    } else if (line.startsWith('Top HuggingFace Models:')) {
+      currentSection = 'huggingface';
+    } else if (line.startsWith('Top arXiv Papers:')) {
+      currentSection = 'arxiv';
+    } else if (line.startsWith('- ')) {
+      const entry = line.substring(2);
+      switch (currentSection) {
+        case 'github':
+          gitHubTools.push(entry);
+          break;
+        case 'huggingface':
+          huggingFaceModels.push(entry);
+          break;
+        case 'arxiv':
+          arxivPapers.push(entry);
+          break;
+      }
+    }
+  }
+  
+  // Create a more detailed summary
+  let summary = `Today's digest covers ${totalTools} AI tools with ${newTools} new additions. `;
+  
+  if (gitHubTools.length > 0) {
+    summary += `Notable GitHub repositories include ${gitHubTools[0]}`;
+    if (gitHubTools.length > 1) {
+      summary += ` and ${gitHubTools.length - 1} others. `;
+    } else {
+      summary += '. ';
+    }
+  }
+  
+  if (huggingFaceModels.length > 0) {
+    summary += `Top HuggingFace models feature ${huggingFaceModels[0]}`;
+    if (huggingFaceModels.length > 1) {
+      summary += ` and ${huggingFaceModels.length - 1} others. `;
+    } else {
+      summary += '. ';
+    }
+  }
+  
+  if (arxivPapers.length > 0) {
+    summary += `Key research papers include ${arxivPapers[0]}`;
+    if (arxivPapers.length > 1) {
+      summary += ` and ${arxivPapers.length - 1} others.`;
+    } else {
+      summary += '.';
+    }
+  }
+  
+  return summary;
 }
 
 async function generateSummary(text) {
+  // Validate input text
+  if (!text || typeof text !== 'string' || text.trim().length === 0) {
+    throw new Error('Invalid input text for summarization');
+  }
+
+  // Log input text length for debugging
+  console.log(`Input text length: ${text.length} characters`);
+
   // First try BART
   try {
     console.log("Attempting summarization with Hugging Face BART model...");
+    console.log("Using API key:", process.env.HUGGINGFACE_API_KEY ? 'Present' : 'Missing');
+    
     const result = await retryWithBackoff(async () => {
-      return await hf.summarization({
-        model: 'facebook/bart-large-cnn',
-        inputs: text,
-        parameters: {
-          max_length: 150,
-          min_length: 30,
-        },
-      });
-    }, 2);  // Try twice with backoff
+      try {
+        // Truncate text if too long (BART has a limit of 1024 tokens)
+        const truncatedText = text.length > 4000 ? text.substring(0, 4000) + '...' : text;
+        
+        console.log("Sending request to Hugging Face API...");
+        const response = await hf.summarization({
+          model: 'facebook/bart-large-cnn',
+          inputs: truncatedText,
+          parameters: {
+            max_length: 150,
+            min_length: 30,
+            do_sample: false,
+          },
+        });
+        
+        console.log("Received response from Hugging Face API");
+        return response;
+      } catch (error) {
+        console.error('Detailed BART error:', error);
+        if (error.response) {
+          console.error('BART API response status:', error.response.status);
+          console.error('BART API response headers:', error.response.headers);
+          console.error('BART API response data:', error.response.data);
+        }
+        if (error.message.includes('API key')) {
+          console.error('API key related error. Please check your HUGGINGFACE_API_KEY');
+        }
+        throw error;
+      }
+    }, 3, 1000);
+    
+    if (!result || !result.summary_text) {
+      console.error('Invalid BART response:', result);
+      throw new Error('BART returned invalid response format');
+    }
     
     console.log("BART summarization successful");
     return result.summary_text;
@@ -99,21 +187,40 @@ async function generateSummary(text) {
     try {
       console.log("Attempting summarization with OpenAI GPT-3.5...");
       const completion = await retryWithBackoff(async () => {
-        return await openai.createChatCompletion({
-          model: 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a helpful assistant that summarizes AI tools and research papers in a concise and informative way.'
-            },
-            {
-              role: 'user',
-              content: `Please summarize the following information in a concise and informative way: ${text}`
+        try {
+          return await openai.createChatCompletion({
+            model: 'gpt-3.5-turbo',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a helpful assistant that summarizes AI tools and research papers in a concise and informative way.'
+              },
+              {
+                role: 'user',
+                content: `Please summarize the following information in a concise and informative way: ${text}`
+              }
+            ],
+            max_tokens: 150,
+            temperature: 0.3,  // Lower temperature for more consistent results
+          });
+        } catch (error) {
+          console.error('Detailed GPT error:', error);
+          if (error.response) {
+            console.error('GPT API response:', error.response.data);
+            if (error.response.status === 429) {
+              // If rate limited, wait longer before retrying
+              const retryAfter = error.response.headers['retry-after'] || 60;
+              console.log(`Rate limited. Waiting ${retryAfter} seconds before retry...`);
+              await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
             }
-          ],
-          max_tokens: 150
-        });
-      }, 2);  // Try twice with backoff
+          }
+          throw error;
+        }
+      }, 3, 2000);  // Increase retries and base delay for rate limits
+      
+      if (!completion?.data?.choices?.[0]?.message?.content) {
+        throw new Error('GPT returned invalid response format');
+      }
       
       console.log("GPT-3.5 summarization successful");
       return completion.data.choices[0].message.content;
@@ -288,8 +395,19 @@ ${paper.improvements ? `- **Suggested Improvements**: ${paper.improvements}` : '
 
   // Log stats before saving
   console.log(`Digest created with ${topGithub.length} GitHub tools, ${topHuggingFace.length} HuggingFace models, and ${topArxiv.length} arXiv papers`);
+  console.log('Saving digest to database...');
+  console.log('Summary length:', summary.length);
+  console.log('Formatted document length:', formattedDocument.length);
 
-  await digest.save();
+  try {
+    await digest.save();
+    console.log('Successfully saved digest to database');
+    console.log('Digest ID:', digest._id);
+  } catch (error) {
+    console.error('Failed to save digest to database:', error);
+    throw error;
+  }
+
   return digest;
 }
 

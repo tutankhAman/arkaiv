@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const mongoose = require('mongoose');
+const DailyDigest = require('../models/DailyDigest');
 
 // Improved environment loading
 const envPath = path.resolve(__dirname, '../.env');
@@ -52,15 +53,39 @@ async function main() {
     console.log('Generating daily digest...');
     const digest = await generateDailyDigest();
     
-    // Save the formatted document to a file
-    const digestsDir = path.join(__dirname, '..', 'digests');
-    if (!fs.existsSync(digestsDir)) {
-      fs.mkdirSync(digestsDir);
+    // Check if a digest already exists for today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const existingDigest = await DailyDigest.findOne({
+      date: {
+        $gte: today,
+        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
+      }
+    });
+
+    if (existingDigest) {
+      console.log('A digest already exists for today. Updating it...');
+      // Update existing digest
+      existingDigest.totalTools = digest.totalTools;
+      existingDigest.newTools = digest.newTools;
+      existingDigest.topEntries = digest.topEntries;
+      existingDigest.summary = digest.summary;
+      existingDigest.formattedDocument = digest.formattedDocument;
+      await existingDigest.save();
+      console.log('Updated existing digest in database');
+    } else {
+      // Create new digest
+      const newDigest = new DailyDigest({
+        date: digest.date,
+        totalTools: digest.totalTools,
+        newTools: digest.newTools,
+        topEntries: digest.topEntries,
+        summary: digest.summary,
+        formattedDocument: digest.formattedDocument
+      });
+      await newDigest.save();
+      console.log('Saved new digest to database');
     }
-    
-    const filename = `digest_${digest.date.toISOString().split('T')[0]}.md`;
-    const filepath = path.join(digestsDir, filename);
-    fs.writeFileSync(filepath, digest.formattedDocument);
     
     console.log('\nDaily Digest Generated:');
     console.log('Date:', digest.date);
@@ -68,7 +93,6 @@ async function main() {
     console.log('New Tools Today:', digest.newTools);
     console.log('\nSummary:');
     console.log(digest.summary);
-    console.log('\nDigest saved to:', filepath);
 
   } catch (error) {
     console.error('Error:', error);
