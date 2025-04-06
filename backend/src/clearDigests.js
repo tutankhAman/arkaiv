@@ -44,4 +44,4 @@ async function clearDigests() {
   }
 }
 
-clearDigests(); 
+clearDigests();

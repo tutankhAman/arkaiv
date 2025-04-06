@@ -66,16 +66,6 @@ function scheduleScrapingTasks() {
     }
   });
 
-  // Run initial digest generation
-  console.log('Running initial digest generation...');
-  generateDailyDigest()
-    .then(digest => {
-      console.log('Initial digest generated successfully:', digest.date);
-    })
-    .catch(error => {
-      console.error('Initial digest generation failed:', error);
-    });
-
   console.log('Scraping tasks scheduled to run daily at 3 AM IST');
   console.log('Daily digest generation scheduled at 4 AM IST');
 }

@@ -219,6 +219,23 @@ app.get('/api/digest/:date', auth, async (req, res) => {
   }
 });
 
+// Get all digests
+app.get('/api/digests', auth, async (req, res) => {
+  try {
+    const digests = await DailyDigest.find()
+      .sort({ date: -1 });
+    
+    if (!digests || digests.length === 0) {
+      return res.status(404).json({ error: 'No digests found' });
+    }
+    
+    res.json(digests);
+  } catch (error) {
+    console.error('Error fetching digests:', error);
+    res.status(500).json({ error: 'Failed to fetch digests' });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);

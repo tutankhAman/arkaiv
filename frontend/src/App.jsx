@@ -6,6 +6,7 @@ import Digest from './pages/Digest';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
+import About from './pages/About';
 import './App.css';
 
 // Protected Route component
@@ -24,6 +25,7 @@ function App() {
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/about" element={<About />} />
 
         {/* Protected routes */}
         <Route
