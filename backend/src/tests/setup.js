@@ -1,3 +1,4 @@
+// Test environment setup for MongoDB integration tests
 const mongoose = require('mongoose');
 const path = require('path');
 const dotenv = require('dotenv');
@@ -37,7 +38,7 @@ beforeAll(async () => {
   }
 });
 
-// Clear all collections before each test
+// Clear all collections before each test to ensure clean state
 beforeEach(async () => {
   try {
     const collections = mongoose.connection.collections;
@@ -50,7 +51,7 @@ beforeEach(async () => {
   }
 });
 
-// Close connection after all tests
+// Close connection after all tests complete
 afterAll(async () => {
   try {
     await mongoose.connection.close();

@@ -1,3 +1,4 @@
+// Scraper for GitHub AI repositories using Playwright
 const { chromium } = require('playwright');
 const AITool = require('../models/AITool');
 
@@ -6,6 +7,7 @@ const AITool = require('../models/AITool');
  * @returns {Promise<Array>} Array of scraped repositories
  */
 async function scrapeGitHub() {
+  // Initialize browser with custom user agent
   const browser = await chromium.launch({ 
     headless: true,
   });
@@ -16,6 +18,7 @@ async function scrapeGitHub() {
   const results = new Map(); // Use Map to track unique repositories
 
   try {
+    // Navigate to GitHub search page for AI repositories
     console.log('Navigating to GitHub search page...');
     await page.goto('https://github.com/search?q=artificial+intelligence+machine+learning+deep+learning&type=repositories&s=stars&o=desc&per_page=50', {
       waitUntil: 'networkidle',
@@ -25,7 +28,7 @@ async function scrapeGitHub() {
     console.log('Waiting for results to load...');
     await page.waitForSelector('.Box-sc-g0xbh4-0', { timeout: 60000 });
 
-    // Get repository items using page.evaluate for better performance
+    // Extract repository information from search results
     const repos = await page.evaluate(() => {
       const items = document.querySelectorAll('.Box-sc-g0xbh4-0');
       const results = [];
@@ -53,7 +56,7 @@ async function scrapeGitHub() {
 
     console.log(`Found ${repos.length} repositories`);
 
-    // Process unique repositories
+    // Process and deduplicate repositories
     for (const repo of repos) {
       const key = repo.url; // Use URL as unique key
       if (!results.has(key)) {
@@ -77,7 +80,7 @@ async function scrapeGitHub() {
     const uniqueResults = Array.from(results.values());
     console.log(`Successfully processed ${uniqueResults.length} unique repositories`);
 
-    // Save to database
+    // Save repositories to database
     for (const result of uniqueResults) {
       await AITool.findOneAndUpdate(
         { url: result.url },

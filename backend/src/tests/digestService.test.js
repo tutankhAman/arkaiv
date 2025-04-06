@@ -1,9 +1,10 @@
+// Tests for the daily digest generation service
 const { generateDailyDigest } = require('../services/digestService');
 const AITool = require('../models/AITool');
 const DailyDigest = require('../models/DailyDigest');
 const mongoose = require('mongoose');
 
-// Mock the external API calls
+// Mock external API services (HuggingFace and OpenAI)
 jest.mock('@huggingface/inference', () => ({
   HfInference: jest.fn()
 }));
@@ -27,6 +28,7 @@ describe('Digest Service', () => {
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   
+  // Mock data for testing different tool sources
   const mockTools = [
     {
       name: 'Test GitHub Tool 1',
@@ -63,7 +65,7 @@ describe('Digest Service', () => {
   ];
 
   beforeEach(async () => {
-    // Reset mocks
+    // Reset mocks and insert test data
     const { HfInference } = require('@huggingface/inference');
     HfInference.mockImplementation(() => ({
       summarization: jest.fn().mockResolvedValue({
@@ -74,6 +76,7 @@ describe('Digest Service', () => {
   });
 
   describe('generateDailyDigest', () => {
+    // Test basic digest generation
     it('should generate a digest with correct statistics', async () => {
       const digest = await generateDailyDigest();
 
@@ -83,6 +86,7 @@ describe('Digest Service', () => {
       expect(digest.summary).toBeDefined();
     });
 
+    // Test source-specific tool ranking
     it('should include top 3 tools from each source', async () => {
       const digest = await generateDailyDigest();
 
@@ -96,6 +100,7 @@ describe('Digest Service', () => {
       );
     });
 
+    // Test empty database handling
     it('should handle empty database gracefully', async () => {
       await AITool.deleteMany({});
       const digest = await generateDailyDigest();
@@ -108,6 +113,7 @@ describe('Digest Service', () => {
       expect(digest.topEntries.arxiv).toHaveLength(0);
     });
 
+    // Test fallback to GPT-3.5 when BART fails
     it('should use GPT-3.5 when BART fails', async () => {
       const { HfInference } = require('@huggingface/inference');
       HfInference.mockImplementation(() => ({
@@ -118,6 +124,7 @@ describe('Digest Service', () => {
       expect(digest.summary).toBe('Mocked GPT-3.5 summary');
     });
 
+    // Test error handling for API failures
     it('should handle API errors gracefully', async () => {
       const { HfInference } = require('@huggingface/inference');
       HfInference.mockImplementation(() => ({
