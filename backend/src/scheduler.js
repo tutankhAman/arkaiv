@@ -2,7 +2,7 @@ const cron = require('node-cron');
 const scrapeGitHub = require('./scrapers/githubScraper');
 const scrapeHuggingFace = require('./scrapers/huggingfaceScraper');
 const scrapeArXiv = require('./scrapers/arxivScraper');
-const { generateDailyDigest } = require('./services/digestService');
+const { generateDailyDigest } = require('./digests/generateDigest');
 const fs = require('fs');
 const path = require('path');
 

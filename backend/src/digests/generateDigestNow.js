@@ -13,7 +13,6 @@ if (fs.existsSync(envPath)) {
   const rootEnvPath = path.resolve(__dirname, '../../.env');
   if (fs.existsSync(rootEnvPath)) {
     console.log(`Loading environment from: ${rootEnvPath}`);
-    
     require('dotenv').config({ path: rootEnvPath });
   } else {
     console.warn('No .env file found in parent directory either');
@@ -21,7 +20,7 @@ if (fs.existsSync(envPath)) {
   }
 }
 
-const { generateDailyDigest } = require('./services/digestService');
+const generateDailyDigest = require('./digestService');
 
 async function main() {
   try {

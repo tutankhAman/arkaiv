@@ -293,6 +293,5 @@ ${paper.improvements ? `- **Suggested Improvements**: ${paper.improvements}` : '
   return digest;
 }
 
-module.exports = {
-  generateDailyDigest
-};
+// Export the generateDailyDigest function directly
+module.exports = generateDailyDigest;

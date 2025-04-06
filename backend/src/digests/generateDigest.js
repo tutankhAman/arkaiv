@@ -1,6 +1,6 @@
 require('dotenv').config({ path: '.env' });
 const mongoose = require('mongoose');
-const { generateDailyDigest } = require('./services/digestService');
+const generateDailyDigest = require('./digestService');
 
 async function main() {
   try {

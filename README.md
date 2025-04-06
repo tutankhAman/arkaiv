@@ -33,7 +33,7 @@ Arkaiv automatically scrapes data from popular AI resources, analyzes trends, an
 - Hugging Face API key (for summarization)
 - OpenAI API key (as fallback for summarization)
 
-### Installation
+### Installation and Setup
 
 1. Clone the repository:
    ```bash
@@ -41,13 +41,18 @@ Arkaiv automatically scrapes data from popular AI resources, analyzes trends, an
    cd arkaiv
    ```
 
-2. Install dependencies:
+2. Install backend dependencies:
    ```bash
    cd backend
    npm install
    ```
 
-3. Configure environment variables:
+3. Install Playwright for web scraping:
+   ```bash
+   npx playwright install
+   ```
+
+4. Configure environment variables:
    Create a `.env` file in the backend directory with the following variables:
    ```
    PORT=3000
@@ -56,53 +61,130 @@ Arkaiv automatically scrapes data from popular AI resources, analyzes trends, an
    OPENAI_API_KEY=your_openai_api_key
    ```
 
-### Usage
+### Running the Project
 
-#### Running the Scrapers
+Follow these steps in order to run the project:
 
-Run the scrapers to collect data from GitHub, Hugging Face, and arXiv:
+1. Clear the database (optional, but recommended for fresh start):
+   ```bash
+   cd backend/src/scripts
+   node clearDb.js
+   ```
 
-```bash
-cd backend
-node src/scripts/run-scrapers.js
-```
+2. Test the scrapers:
+   ```bash
+   cd ../scrapers
+   node testScrapers.js
+   ```
 
-#### Generating a Digest
-
-Generate a daily digest of AI tools and trends:
-
-```bash
-cd backend
-node src/scripts/generate-digest-now.js
-```
-
-#### Clearing the Database
-
-If you need to clear the database and start fresh:
-
-```bash
-cd backend
-node src/scripts/clear-db.js
-```
+3. Generate a digest:
+   ```bash
+   cd ../digests
+   node generateDigestNow.js
+   ```
 
 ## Project Structure
 
 ```
 arkaiv/
 ├── backend/
-│   ├── digests/             # Generated daily digests
 │   ├── src/
 │   │   ├── api/             # API routes and controllers
-│   │   ├── config/          # Configuration files
-│   │   ├── models/          # MongoDB schemas
+│   │   │   ├── routes/      # Express route definitions
+│   │   │   └── controllers/ # Route handlers and business logic
+│   │   ├── config/          # Configuration files and environment setup
+│   │   ├── models/          # MongoDB schemas and database models
+│   │   │   ├── AITool.js    # Schema for AI tools from all sources
+│   │   │   └── DailyDigest.js # Schema for daily digest documents
 │   │   ├── scrapers/        # Data collection modules
-│   │   ├── services/        # Business logic
+│   │   │   ├── githubScraper.js    # Scrapes GitHub repositories
+│   │   │   ├── huggingfaceScraper.js # Scrapes Hugging Face models
+│   │   │   ├── arxivScraper.js     # Scrapes arXiv papers
+│   │   │   └── testScrapers.js     # Tests all scrapers
+│   │   ├── digests/         # Digest generation and formatting
+│   │   │   ├── generateDigest.js       # Main digest generation logic
+│   │   │   ├── generateDigestNow.js    # Script to generate digest immediately
+│   │   │   ├── generateDigestDocument.js # Document formatting utilities
+│   │   │   └── digestService.js        # Core digest generation service
 │   │   ├── scripts/         # Utility and runner scripts
-│   │   ├── tests/           # Test suites
-│   │   └── app.js           # Express API server
-│   └── package.json
+│   │   │   ├── clearDb.js   # Script to clear the database
+│   │   │   └── runScrapers.js # Script to run all scrapers
+│   │   ├── tests/           # Test suites and test utilities
+│   │   └── app.js           # Express API server entry point
+│   ├── digests/             # Generated daily digest markdown files
+│   ├── .env                 # Environment variables and configuration
+│   ├── package.json         # Project dependencies and scripts
+│   └── package-lock.json    # Lock file for dependencies
 └── README.md
 ```
+
+### Directory and File Descriptions
+
+#### Backend Structure
+
+- **src/api/**
+  - Contains all API-related code
+  - `routes/`: Defines API endpoints and URL patterns
+  - `controllers/`: Implements business logic for each route
+
+- **src/config/**
+  - Configuration files and environment setup
+  - Handles loading of environment variables
+  - Defines application-wide settings
+
+- **src/models/**
+  - MongoDB schemas and database models
+  - `AITool.js`: Defines the schema for AI tools from all sources
+  - `DailyDigest.js`: Defines the schema for daily digest documents
+
+- **src/scrapers/**
+  - Data collection modules for different sources
+  - `githubScraper.js`: Collects AI tools from GitHub repositories
+  - `huggingfaceScraper.js`: Collects models from Hugging Face
+  - `arxivScraper.js`: Collects papers from arXiv
+  - `testScrapers.js`: Tests all scrapers and verifies data collection
+
+- **src/digests/**
+  - Digest generation and formatting
+  - `generateDigest.js`: Main logic for generating daily digests
+  - `generateDigestNow.js`: Script to generate digest immediately
+  - `generateDigestDocument.js`: Utilities for formatting digest documents
+  - `digestService.js`: Core service for digest generation and summarization
+
+- **src/scripts/**
+  - Utility scripts for project management
+  - `clearDb.js`: Clears the database for fresh starts
+  - `runScrapers.js`: Runs all scrapers in sequence
+
+- **src/tests/**
+  - Test suites and test utilities
+  - Contains test files for different components
+  - Includes test data and mock services
+
+- **src/app.js**
+  - Main Express application entry point
+  - Sets up middleware and routes
+  - Initializes database connection
+
+#### Root Level Files
+
+- **digests/**
+  - Directory containing generated daily digest markdown files
+  - Each digest is named with its date (e.g., `digest_2024-04-05.md`)
+
+- **.env**
+  - Environment configuration file
+  - Contains sensitive information and API keys
+  - Not committed to version control
+
+- **package.json**
+  - Project metadata and dependencies
+  - Defines npm scripts and project configuration
+  - Lists all required packages
+
+- **package-lock.json**
+  - Lock file for npm dependencies
+  - Ensures consistent dependency versions
 
 ## Current Status
 
