@@ -1,5 +1,5 @@
 const Subscription = require('../models/subscription');
-const User = require('../models/user');
+const User = require('../models/User');
 const nodemailer = require('nodemailer');
 
 // Create a transporter for sending emails
