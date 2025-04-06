@@ -4,24 +4,29 @@ const nodemailer = require('nodemailer');
 
 // Create a transporter for sending emails
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD
   },
-  tls: {
-    rejectUnauthorized: false // Only for development, remove in production
-  },
-  pool: true,
-  maxConnections: 1,
-  rateDelta: 1000, // 1 second
-  rateLimit: 3 // 3 emails per second
+  debug: true, // Enable debug logging
+  logger: true // Enable logger
 });
 
 // Verify transporter configuration on startup
 transporter.verify((error, success) => {
   if (error) {
     console.error('SMTP Connection Error:', error);
+    // Log detailed error information
+    console.error('Email Configuration:', {
+      user: process.env.EMAIL_USER,
+      hasPassword: !!process.env.EMAIL_PASSWORD,
+      errorCode: error.code,
+      errorMessage: error.message,
+      response: error.response
+    });
   } else {
     console.log('SMTP Server is ready to send emails');
   }
@@ -40,22 +45,33 @@ const sendEmail = async (mailOptions) => {
         console.log('Email sent successfully:', {
           messageId: info.messageId,
           to: mailOptions.to,
-          subject: mailOptions.subject
+          subject: mailOptions.subject,
+          response: info.response
         });
         return true;
       } catch (error) {
         retries--;
-        if (retries === 0) throw error;
+        if (retries === 0) {
+          console.error('Email sending failed after all retries:', {
+            error: error.message,
+            code: error.code,
+            response: error.response,
+            to: mailOptions.to,
+            stack: error.stack
+          });
+          throw error;
+        }
         console.log(`Retrying email send (${retries} attempts left)...`);
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
       }
     }
   } catch (error) {
-    console.error('Email sending failed after all retries:', {
+    console.error('Email sending failed:', {
       error: error.message,
       code: error.code,
       response: error.response,
-      to: mailOptions.to
+      to: mailOptions.to,
+      stack: error.stack
     });
     return false;
   }
