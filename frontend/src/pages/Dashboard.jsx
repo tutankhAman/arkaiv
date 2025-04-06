@@ -3,8 +3,12 @@ import { Hero } from '../components/ui/hero';
 import { AIToolCard } from '../components/ui/ai-tool-card';
 import { TextShimmer } from '../components/ui/text-shimmer';
 import { Loader2 } from 'lucide-react';
+import SubscriptionModal from '../components/ui/subscription-modal';
+import { Button } from '../components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [trendingTools, setTrendingTools] = useState({
     github: [],
     huggingface: [],
@@ -12,13 +16,26 @@ const Dashboard = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
 
   useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (!storedUser) {
+      navigate('/login');
+      return;
+    }
+
+    const userData = JSON.parse(storedUser);
+    setUserEmail(userData.email);
+
     const fetchTrendingTools = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch('http://localhost:3000/api/tools');
+        const response = await fetch('http://localhost:3001/api/tools');
         if (!response.ok) {
           throw new Error('Failed to fetch tools');
         }
@@ -32,8 +49,49 @@ const Dashboard = () => {
       }
     };
 
+    const checkSubscription = async () => {
+      try {
+        const response = await fetch(`http://localhost:3001/api/subscription/status?email=${userData.email}`);
+        if (response.ok) {
+          const data = await response.json();
+          setIsSubscribed(data.isSubscribed);
+        }
+      } catch (error) {
+        console.error('Error checking subscription status:', error);
+      }
+    };
+
     fetchTrendingTools();
-  }, []);
+    checkSubscription();
+  }, [navigate]);
+
+  const handleSubscribe = async () => {
+    try {
+      setSubscriptionLoading(true);
+      const response = await fetch('http://localhost:3001/api/subscription/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: userEmail })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setIsSubscribed(true);
+        alert('Successfully subscribed! Check your email for confirmation.');
+      } else {
+        alert(data.message || 'Failed to subscribe. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error subscribing:', error);
+      alert('An error occurred while subscribing. Please try again.');
+    } finally {
+      setSubscriptionLoading(false);
+      setIsModalOpen(false);
+    }
+  };
 
   const handleSearch = (query) => {
     console.log('Searching for:', query);
@@ -72,6 +130,26 @@ const Dashboard = () => {
         title="Welcome to arkaiv!"
         titleClassName="text-5xl md:text-6xl font-extrabold"
         onSearch={handleSearch}
+      />
+      
+      <div className="container mx-auto px-4 py-4 flex justify-center">
+        <Button
+          onClick={() => isSubscribed ? null : setIsModalOpen(true)}
+          className={`${
+            isSubscribed
+              ? 'bg-green-600 hover:bg-green-700 cursor-default'
+              : 'bg-primary hover:bg-primary/90'
+          } text-white`}
+          disabled={subscriptionLoading}
+        >
+          {subscriptionLoading ? 'Subscribing...' : isSubscribed ? 'Already Subscribed' : 'Subscribe to AI Digest'}
+        </Button>
+      </div>
+      
+      <SubscriptionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSubscribe}
       />
       
       <section className="container mx-auto px-4 py-12">
