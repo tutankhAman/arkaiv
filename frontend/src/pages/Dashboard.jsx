@@ -37,7 +37,11 @@ const Dashboard = () => {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch('http://localhost:3001/api/tools');
+        const response = await fetch('http://localhost:3000/api/tools', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch tools');
         }
