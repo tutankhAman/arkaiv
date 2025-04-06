@@ -42,7 +42,7 @@ exports.subscribe = async (req, res) => {
     // Send confirmation email
     try {
       console.log('Sending confirmation email to:', email);
-      await transporter.sendMail({
+      const mailOptions = {
         from: 'work.arkaiv@gmail.com',
         to: email,
         subject: 'Subscription Confirmation - arkaiv AI Digest',
@@ -72,11 +72,28 @@ exports.subscribe = async (req, res) => {
             </div>
           </div>
         `
+      };
+
+      // Verify the transporter configuration
+      await transporter.verify((error, success) => {
+        if (error) {
+          console.error('SMTP Connection Error:', error);
+          throw new Error('SMTP connection failed: ' + error.message);
+        }
+        console.log('SMTP Server is ready to send emails');
       });
-      console.log('Confirmation email sent successfully to:', email);
+
+      const info = await transporter.sendMail(mailOptions);
+      console.log('Email sent successfully:', info.messageId);
     } catch (emailError) {
-      console.error('Error sending confirmation email:', emailError);
-      // Don't fail the subscription if email fails
+      console.error('Detailed email error:', {
+        message: emailError.message,
+        stack: emailError.stack,
+        code: emailError.code,
+        response: emailError.response
+      });
+      // Don't fail the subscription if email fails, but log the error
+      console.error('Failed to send confirmation email, but subscription was created');
     }
 
     res.status(201).json({ message: 'Successfully subscribed to AI digest' });
