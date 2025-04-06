@@ -8,6 +8,7 @@ const authRoutes = require('./routes/auth');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const searchRoutes = require('./routes/search');
+const subscriptionRoutes = require('./routes/subscriptionRoutes');
 
 dotenv.config();
 
@@ -103,6 +104,7 @@ const auth = (req, res, next) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/subscription', subscriptionRoutes);
 
 // Protected routes
 app.get('/api/tools', auth, async (req, res) => {
