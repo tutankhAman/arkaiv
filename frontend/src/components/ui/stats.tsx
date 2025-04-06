@@ -1,11 +1,20 @@
 "use client"
 
 import * as React from "react"
-import { motion } from "framer-motion"
+import { motion, HTMLMotionProps } from "framer-motion"
 import { cn } from "../../lib/utils"
 
-interface StatsProps extends React.HTMLAttributes<HTMLDivElement> {
+interface StatsProps extends Omit<HTMLMotionProps<"div">, "ref"> {
   className?: string
+}
+
+interface ToolsCount {
+  total: number
+  bySource: {
+    github: number
+    huggingface: number
+    arxiv: number
+  }
 }
 
 const Stats = React.forwardRef<HTMLDivElement, StatsProps>(
@@ -19,11 +28,11 @@ const Stats = React.forwardRef<HTMLDivElement, StatsProps>(
       const fetchStats = async () => {
         try {
           // Fetch total models count
-          const toolsResponse = await fetch('http://localhost:3000/api/tools')
-          if (!toolsResponse.ok) {
-            throw new Error(`Tools API error: ${toolsResponse.status}`)
+          const countResponse = await fetch('http://localhost:3000/api/tools/count')
+          if (!countResponse.ok) {
+            throw new Error(`Count API error: ${countResponse.status}`)
           }
-          const toolsData = await toolsResponse.json()
+          const countData = await countResponse.json() as ToolsCount
           
           // Fetch latest digest for new tools count
           const digestResponse = await fetch('http://localhost:3000/api/digest/latest')
@@ -33,7 +42,7 @@ const Stats = React.forwardRef<HTMLDivElement, StatsProps>(
           const digestData = await digestResponse.json()
 
           setStats({
-            totalModels: toolsData.length,
+            totalModels: countData.total,
             newToolsToday: digestData?.newTools || 0
           })
         } catch (error) {

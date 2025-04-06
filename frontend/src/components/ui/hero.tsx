@@ -6,6 +6,7 @@ import { cn } from "../../lib/utils"
 import { TextShimmer } from "./text-shimmer"
 import { Stats } from "./stats"
 import { SearchBar } from "./search-bar"
+import { ChevronDown } from "lucide-react"
 
 interface HeroProps extends React.HTMLAttributes<HTMLElement> {
   gradient?: boolean
@@ -32,7 +33,7 @@ const Hero = React.forwardRef<HTMLElement, HeroProps>(
       <section
         ref={ref}
         className={cn(
-          "relative z-0 flex min-h-[60vh] w-full flex-col items-center justify-start overflow-hidden rounded-md bg-zinc-950",
+          "relative z-0 flex h-[90vh] w-full flex-col items-center justify-between overflow-hidden rounded-md bg-zinc-950",
           className,
         )}
         {...props}
@@ -107,14 +108,14 @@ const Hero = React.forwardRef<HTMLElement, HeroProps>(
           viewport={{ once: true }}
           transition={{ ease: "easeInOut", delay: 0.3, duration: 0.8 }}
           whileInView={{ y: 0, opacity: 1 }}
-          className="relative z-50 container flex justify-center flex-1 flex-col px-5 md:px-10 py-16"
+          className="relative z-50 container flex justify-center flex-1 flex-col px-5 md:px-10 py-12"
         >
-          <div className="flex flex-col items-center text-center space-y-8">
+          <div className="flex flex-col items-center text-center space-y-4">
             <TextShimmer
               as="h1"
               duration={1.2}
               className={cn(
-                "text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-400 font-heading",
+                "text-4xl mt-[-10vh] sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-400 font-heading",
                 titleClassName,
               )}
             >
@@ -126,6 +127,21 @@ const Hero = React.forwardRef<HTMLElement, HeroProps>(
             <Stats />
             <SearchBar onSearch={onSearch} />
           </div>
+        </motion.div>
+
+        {/* Scroll indicator */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.5, duration: 0.5 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50"
+        >
+          <motion.div
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            <ChevronDown className="w-6 h-6 text-gray-400" />
+          </motion.div>
         </motion.div>
       </section>
     )

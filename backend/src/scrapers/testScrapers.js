@@ -1,7 +1,7 @@
 // Test script for verifying scraper functionality
-const scrapeGitHub = require('./githubScraper');
 const scrapeHuggingFace = require('./huggingfaceScraper');
 const scrapeArXiv = require('./arxivScraper');
+const scrapeGitHub = require('./githubScraper');
 const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
@@ -53,21 +53,21 @@ async function testScrapers() {
     console.log('Connected to MongoDB successfully!');
     console.log('Starting scraper tests...\n');
 
-    // Test and validate GitHub scraper
-    console.log('Testing GitHub Scraper...');
-    const githubResults = await scrapeGitHub();
-    console.log(`GitHub Scraper Results: ${githubResults.length} repositories found`);
-    if (githubResults.length > 0) {
-      console.log('Sample GitHub Result:', JSON.stringify(githubResults[0], null, 2));
-    }
-    console.log('\n');
-
     // Test and validate HuggingFace scraper
     console.log('Testing Hugging Face Scraper...');
     const huggingfaceResults = await scrapeHuggingFace();
     console.log(`Hugging Face Scraper Results: ${huggingfaceResults.length} models found`);
     if (huggingfaceResults.length > 0) {
       console.log('Sample Hugging Face Result:', JSON.stringify(huggingfaceResults[0], null, 2));
+    }
+    console.log('\n');
+
+    // Test and validate GitHub scraper
+    console.log('Testing GitHub Scraper...');
+    const githubResults = await scrapeGitHub();
+    console.log(`GitHub Scraper Results: ${githubResults.length} repositories found`);
+    if (githubResults.length > 0) {
+      console.log('Sample GitHub Result:', JSON.stringify(githubResults[0], null, 2));
     }
     console.log('\n');
 
@@ -86,19 +86,19 @@ async function testScrapers() {
     console.log(`Total tools in database: ${totalTools}`);
 
     // Get sample entries from each source for verification
-    const githubTools = await AITool.find({ source: 'GitHub' }).limit(1);
     const huggingfaceTools = await AITool.find({ source: 'HuggingFace' }).limit(1);
     const arxivTools = await AITool.find({ source: 'arXiv' }).limit(1);
+    const githubTools = await AITool.find({ source: 'GitHub' }).limit(1);
 
     console.log('\nDatabase Verification:');
-    if (githubTools.length > 0) {
-      console.log('GitHub Tool Sample:', JSON.stringify(githubTools[0], null, 2));
-    }
     if (huggingfaceTools.length > 0) {
       console.log('Hugging Face Tool Sample:', JSON.stringify(huggingfaceTools[0], null, 2));
     }
     if (arxivTools.length > 0) {
       console.log('arXiv Tool Sample:', JSON.stringify(arxivTools[0], null, 2));
+    }
+    if (githubTools.length > 0) {
+      console.log('GitHub Tool Sample:', JSON.stringify(githubTools[0], null, 2));
     }
 
     console.log('\nAll scrapers tested successfully!');

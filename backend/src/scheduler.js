@@ -2,7 +2,7 @@ const cron = require('node-cron');
 const scrapeGitHub = require('./scrapers/githubScraper');
 const scrapeHuggingFace = require('./scrapers/huggingfaceScraper');
 const scrapeArXiv = require('./scrapers/arxivScraper');
-const { generateDailyDigest } = require('./digests/generateDigest');
+const generateDailyDigest = require('./digests/digestService');
 const fs = require('fs');
 const path = require('path');
 
@@ -14,8 +14,8 @@ function scheduleScrapingTasks() {
   cron.schedule('0 3 * * *', async () => {
     console.log('Running GitHub scraper...');
     try {
-      await scrapeGitHub();
-      console.log('GitHub scraping completed successfully');
+      const results = await scrapeGitHub();
+      console.log(`GitHub scraping completed successfully: ${results.length} repositories found`);
     } catch (error) {
       console.error('GitHub scraping failed:', error);
     }
@@ -25,8 +25,8 @@ function scheduleScrapingTasks() {
   cron.schedule('0 3 * * *', async () => {
     console.log('Running Hugging Face scraper...');
     try {
-      await scrapeHuggingFace();
-      console.log('Hugging Face scraping completed successfully');
+      const results = await scrapeHuggingFace();
+      console.log(`Hugging Face scraping completed successfully: ${results.length} models found`);
     } catch (error) {
       console.error('Hugging Face scraping failed:', error);
     }
@@ -36,8 +36,8 @@ function scheduleScrapingTasks() {
   cron.schedule('0 3 * * *', async () => {
     console.log('Running arXiv scraper...');
     try {
-      await scrapeArXiv();
-      console.log('arXiv scraping completed successfully');
+      const results = await scrapeArXiv();
+      console.log(`arXiv scraping completed successfully: ${results.length} papers found`);
     } catch (error) {
       console.error('arXiv scraping failed:', error);
     }
@@ -65,6 +65,16 @@ function scheduleScrapingTasks() {
       console.error('Daily digest generation failed:', error);
     }
   });
+
+  // Run initial digest generation
+  console.log('Running initial digest generation...');
+  generateDailyDigest()
+    .then(digest => {
+      console.log('Initial digest generated successfully:', digest.date);
+    })
+    .catch(error => {
+      console.error('Initial digest generation failed:', error);
+    });
 
   console.log('Scraping tasks scheduled to run daily at 3 AM IST');
   console.log('Daily digest generation scheduled at 4 AM IST');
