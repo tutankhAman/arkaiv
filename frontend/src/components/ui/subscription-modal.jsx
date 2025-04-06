@@ -16,10 +16,10 @@ const SubscriptionModal = ({ isOpen, onClose, onSubmit }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] bg-zinc-900 text-white border-zinc-800">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-white">Subscribe to AI Digest</DialogTitle>
-          <DialogDescription className="text-zinc-300">
+          <DialogTitle>Subscribe to AI Digest</DialogTitle>
+          <DialogDescription>
             Get daily updates about new AI tools and research directly in your inbox.
           </DialogDescription>
         </DialogHeader>
