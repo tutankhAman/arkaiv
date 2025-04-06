@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react';
 import SubscriptionModal from '../components/ui/subscription-modal';
 import { Button } from '../components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { Notification } from '../components/ui/notification';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const Dashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -80,16 +82,69 @@ const Dashboard = () => {
       
       if (response.ok) {
         setIsSubscribed(true);
-        alert('Successfully subscribed! Check your email for confirmation.');
+        setNotification({
+          show: true,
+          message: 'Successfully subscribed! Please check your email (including spam folder) for confirmation.',
+          type: 'success'
+        });
       } else {
-        alert(data.message || 'Failed to subscribe. Please try again.');
+        console.error('Subscription failed:', data.message);
+        setNotification({
+          show: true,
+          message: data.message || 'Failed to subscribe. Please try again.',
+          type: 'error'
+        });
       }
     } catch (error) {
       console.error('Error subscribing:', error);
-      alert('An error occurred while subscribing. Please try again.');
+      setNotification({
+        show: true,
+        message: 'An error occurred while subscribing. Please try again.',
+        type: 'error'
+      });
     } finally {
       setSubscriptionLoading(false);
       setIsModalOpen(false);
+    }
+  };
+
+  const handleUnsubscribe = async () => {
+    try {
+      setSubscriptionLoading(true);
+      const response = await fetch('http://localhost:3001/api/subscription/unsubscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: userEmail })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setIsSubscribed(false);
+        setNotification({
+          show: true,
+          message: 'Successfully unsubscribed! Please check your email (including spam folder) for confirmation.',
+          type: 'success'
+        });
+      } else {
+        console.error('Unsubscription failed:', data.message);
+        setNotification({
+          show: true,
+          message: data.message || 'Failed to unsubscribe. Please try again.',
+          type: 'error'
+        });
+      }
+    } catch (error) {
+      console.error('Error unsubscribing:', error);
+      setNotification({
+        show: true,
+        message: 'An error occurred while unsubscribing. Please try again.',
+        type: 'error'
+      });
+    } finally {
+      setSubscriptionLoading(false);
     }
   };
 
@@ -126,24 +181,46 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-zinc-950">
+      {notification.show && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification({ ...notification, show: false })}
+        />
+      )}
+      
       <Hero
         title="Welcome to arkaiv!"
         titleClassName="text-5xl md:text-6xl font-extrabold"
         onSearch={handleSearch}
       />
       
-      <div className="container mx-auto px-4 py-4 flex justify-center">
-        <Button
-          onClick={() => isSubscribed ? null : setIsModalOpen(true)}
-          className={`${
-            isSubscribed
-              ? 'bg-green-600 hover:bg-green-700 cursor-default'
-              : 'bg-primary hover:bg-primary/90'
-          } text-white`}
-          disabled={subscriptionLoading}
-        >
-          {subscriptionLoading ? 'Subscribing...' : isSubscribed ? 'Already Subscribed' : 'Subscribe to AI Digest'}
-        </Button>
+      <div className="container mx-auto px-4 py-4 flex justify-center space-x-4">
+        {isSubscribed ? (
+          <>
+            <Button
+              onClick={handleUnsubscribe}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={subscriptionLoading}
+            >
+              {subscriptionLoading ? 'Unsubscribing...' : 'Unsubscribe from AI Digest'}
+            </Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700 cursor-default text-white"
+              disabled
+            >
+              Already Subscribed
+            </Button>
+          </>
+        ) : (
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-primary hover:bg-primary/90 text-white"
+            disabled={subscriptionLoading}
+          >
+            {subscriptionLoading ? 'Subscribing...' : 'Subscribe to AI Digest'}
+          </Button>
+        )}
       </div>
       
       <SubscriptionModal
