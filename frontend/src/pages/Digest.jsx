@@ -13,7 +13,7 @@ const Digest = () => {
       try {
         setIsLoading(true);
         const token = localStorage.getItem('token');
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/digests`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/digests`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
