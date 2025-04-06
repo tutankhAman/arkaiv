@@ -2,6 +2,9 @@ const cron = require('node-cron');
 const scrapeGitHub = require('./scrapers/githubScraper');
 const scrapeHuggingFace = require('./scrapers/huggingfaceScraper');
 const scrapeArXiv = require('./scrapers/arxivScraper');
+const { generateDailyDigest } = require('./services/digestService');
+const fs = require('fs');
+const path = require('path');
 
 /**
  * Schedules the scraping tasks to run daily at 3 AM IST
@@ -40,7 +43,58 @@ function scheduleScrapingTasks() {
     }
   });
 
+  // Schedule daily digest generation at 4 AM IST (after all scrapers have run)
+  cron.schedule('0 4 * * *', async () => {
+    console.log('Generating daily digest...');
+    try {
+      const digest = await generateDailyDigest();
+      
+      // Save the formatted document to a file
+      const digestsDir = path.join(__dirname, '..', 'digests');
+      if (!fs.existsSync(digestsDir)) {
+        fs.mkdirSync(digestsDir);
+      }
+      
+      const filename = `digest_${digest.date.toISOString().split('T')[0]}.md`;
+      const filepath = path.join(digestsDir, filename);
+      fs.writeFileSync(filepath, digest.formattedDocument);
+      
+      console.log('Daily digest generated successfully:', digest.date);
+      console.log(`Digest saved to: ${filepath}`);
+    } catch (error) {
+      console.error('Daily digest generation failed:', error);
+    }
+  });
+
   console.log('Scraping tasks scheduled to run daily at 3 AM IST');
+  console.log('Daily digest generation scheduled at 4 AM IST');
 }
 
-module.exports = scheduleScrapingTasks; 
+// Function to run digest generation immediately (for testing)
+const runDigestGenerationNow = async () => {
+  try {
+    console.log('Running digest generation now...');
+    const digest = await generateDailyDigest();
+    
+    // Save the formatted document to a file
+    const digestsDir = path.join(__dirname, '..', 'digests');
+    if (!fs.existsSync(digestsDir)) {
+      fs.mkdirSync(digestsDir);
+    }
+    
+    const filename = `digest_${digest.date.toISOString().split('T')[0]}.md`;
+    const filepath = path.join(digestsDir, filename);
+    fs.writeFileSync(filepath, digest.formattedDocument);
+    
+    console.log(`Daily digest generated and saved to: ${filepath}`);
+    return digest;
+  } catch (error) {
+    console.error('Error generating daily digest:', error);
+    throw error;
+  }
+};
+
+module.exports = {
+  scheduleScrapingTasks,
+  runDigestGenerationNow
+}; 
