@@ -8,6 +8,7 @@ import { Button } from '../components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Notification } from '../components/ui/notification';
 import { toolService } from '../services/toolService';
+import { subscriptionService } from '../services/subscriptionService';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -50,15 +51,8 @@ const Dashboard = () => {
 
     const checkSubscription = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/subscription/status?email=${userData.email}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setIsSubscribed(data.isSubscribed);
-        }
+        const data = await subscriptionService.checkSubscriptionStatus(userData.email);
+        setIsSubscribed(data.isSubscribed);
       } catch (error) {
         console.error('Error checking subscription status:', error);
       }
@@ -71,36 +65,18 @@ const Dashboard = () => {
   const handleSubscribe = async () => {
     try {
       setSubscriptionLoading(true);
-      const response = await fetch('http://localhost:3001/api/subscription/subscribe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: userEmail })
+      await subscriptionService.subscribe(userEmail);
+      setIsSubscribed(true);
+      setNotification({
+        show: true,
+        message: 'Successfully subscribed! Please check your email (including spam folder) for confirmation.',
+        type: 'success'
       });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        setIsSubscribed(true);
-        setNotification({
-          show: true,
-          message: 'Successfully subscribed! Please check your email (including spam folder) for confirmation.',
-          type: 'success'
-        });
-      } else {
-        console.error('Subscription failed:', data.message);
-        setNotification({
-          show: true,
-          message: data.message || 'Failed to subscribe. Please try again.',
-          type: 'error'
-        });
-      }
     } catch (error) {
       console.error('Error subscribing:', error);
       setNotification({
         show: true,
-        message: 'An error occurred while subscribing. Please try again.',
+        message: error.message || 'An error occurred while subscribing. Please try again.',
         type: 'error'
       });
     } finally {
@@ -112,36 +88,18 @@ const Dashboard = () => {
   const handleUnsubscribe = async () => {
     try {
       setSubscriptionLoading(true);
-      const response = await fetch('http://localhost:3001/api/subscription/unsubscribe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: userEmail })
+      await subscriptionService.unsubscribe(userEmail);
+      setIsSubscribed(false);
+      setNotification({
+        show: true,
+        message: 'Successfully unsubscribed! Please check your email (including spam folder) for confirmation.',
+        type: 'success'
       });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        setIsSubscribed(false);
-        setNotification({
-          show: true,
-          message: 'Successfully unsubscribed! Please check your email (including spam folder) for confirmation.',
-          type: 'success'
-        });
-      } else {
-        console.error('Unsubscription failed:', data.message);
-        setNotification({
-          show: true,
-          message: data.message || 'Failed to unsubscribe. Please try again.',
-          type: 'error'
-        });
-      }
     } catch (error) {
       console.error('Error unsubscribing:', error);
       setNotification({
         show: true,
-        message: 'An error occurred while unsubscribing. Please try again.',
+        message: error.message || 'An error occurred while unsubscribing. Please try again.',
         type: 'error'
       });
     } finally {
