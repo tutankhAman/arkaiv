@@ -1,7 +1,7 @@
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "../../lib/utils"
-import { Heart, Download, ExternalLink, ChevronDown, Loader2 } from "lucide-react"
+import { Heart, Download, ExternalLink, ChevronDown, Loader2, Users, Code, Clock, Tag, Database } from "lucide-react"
 
 interface HuggingFaceCardProps {
   name: string
@@ -10,6 +10,9 @@ interface HuggingFaceCardProps {
   metrics: {
     likes?: number
     downloads?: number
+    lastUpdated?: string
+    contributors?: number
+    tags?: string[]
   }
   type?: string
   className?: string
@@ -25,8 +28,8 @@ const HuggingFaceCard = React.forwardRef<HTMLDivElement, HuggingFaceCardProps>(
         ref={ref}
         whileHover={{ scale: 1.02 }}
         className={cn(
-          "relative bg-gradient-to-br from-zinc-900/50 to-zinc-800/50 border border-zinc-800 rounded-lg p-4",
-          "hover:border-zinc-700 transition-all duration-200 shadow-lg hover:shadow-xl",
+          "relative bg-gradient-to-br from-zinc-900/50 to-zinc-800/50 border border-zinc-800 rounded-lg p-3",
+          "hover:border-zinc-700 transition-all duration-200 shadow-md hover:shadow-lg",
           "flex flex-col",
           className
         )}
@@ -34,40 +37,46 @@ const HuggingFaceCard = React.forwardRef<HTMLDivElement, HuggingFaceCardProps>(
       >
         {isLoading && (
           <div className="absolute inset-0 bg-zinc-900/50 rounded-lg flex items-center justify-center">
-            <Loader2 className="w-6 h-6 text-primary animate-spin" />
+            <Loader2 className="w-5 h-5 text-primary animate-spin" />
           </div>
         )}
         
         <div className="flex flex-col h-full">
-          {/* Title and Source */}
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-200 line-clamp-2" aria-label={`Model: ${name}`}>
-                {name}
-              </h3>
-            </div>
-            <span className="text-xs px-2 py-1 rounded-full bg-zinc-800 text-gray-400 ml-2">
+          {/* Header Section */}
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-base font-semibold text-gray-200 line-clamp-1" aria-label={`Model: ${name}`}>
+              {name}
+            </h3>
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-800 text-gray-400 ml-2 flex items-center gap-1">
+              <Database className="w-3 h-3" />
               HuggingFace
             </span>
           </div>
 
-          {/* Type Badge */}
-          {type && (
-            <div className="mb-3">
-              <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
+          {/* Type and Tags */}
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {type && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex items-center gap-1">
+                <Code className="w-3 h-3" />
                 {type}
               </span>
-            </div>
-          )}
+            )}
+            {metrics.tags?.slice(0, 2).map((tag, index) => (
+              <span key={index} className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-800 text-gray-400 flex items-center gap-1">
+                <Tag className="w-3 h-3" />
+                {tag}
+              </span>
+            ))}
+          </div>
           
           {/* Description */}
-          <div className="mb-4">
+          <div className="mb-3">
             <AnimatePresence>
               <motion.p
                 initial={false}
-                animate={{ height: isExpanded ? "auto" : "3em" }}
+                animate={{ height: isExpanded ? "auto" : "2.5em" }}
                 className={cn(
-                  "text-sm text-gray-400 overflow-hidden",
+                  "text-xs text-gray-400 overflow-hidden",
                   !isExpanded && "line-clamp-2"
                 )}
               >
@@ -77,7 +86,7 @@ const HuggingFaceCard = React.forwardRef<HTMLDivElement, HuggingFaceCardProps>(
             {description && description.length > 100 && (
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="text-xs text-primary hover:text-primary/80 mt-1 flex items-center"
+                className="text-xs text-primary hover:text-primary/80 mt-0.5 flex items-center"
                 aria-label={isExpanded ? "Show less description" : "Show more description"}
               >
                 {isExpanded ? "Show less" : "Show more"}
@@ -89,35 +98,53 @@ const HuggingFaceCard = React.forwardRef<HTMLDivElement, HuggingFaceCardProps>(
             )}
           </div>
 
-          {/* Metrics and View Button */}
-          <div className="flex items-center justify-between mt-auto">
-            <div className="flex items-center space-x-4 text-sm text-gray-400">
-              {metrics.likes !== undefined && (
-                <div className="flex items-center" aria-label={`${metrics.likes} likes`}>
-                  <Heart className="w-4 h-4 mr-1" />
-                  {metrics.likes.toLocaleString()}
-                </div>
-              )}
-              {metrics.downloads !== undefined && (
-                <div className="flex items-center" aria-label={`${metrics.downloads} downloads`}>
-                  <Download className="w-4 h-4 mr-1" />
-                  {metrics.downloads.toLocaleString()}
-                </div>
-              )}
-            </div>
-            
-            <motion.a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-primary hover:text-primary/80 transition-colors flex items-center"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              aria-label={`View ${name} on HuggingFace`}
-            >
-              View <ExternalLink className="w-4 h-4 ml-1" />
-            </motion.a>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            {metrics.likes !== undefined && (
+              <div className="bg-zinc-800/50 rounded-lg p-2 flex items-center gap-1.5" aria-label={`${metrics.likes} likes`}>
+                <Heart className="w-3.5 h-3.5 text-primary" />
+                <span className="text-xs font-medium text-gray-200">{metrics.likes.toLocaleString()}</span>
+                <span className="text-xs text-gray-400">Likes</span>
+              </div>
+            )}
+            {metrics.downloads !== undefined && (
+              <div className="bg-zinc-800/50 rounded-lg p-2 flex items-center gap-1.5" aria-label={`${metrics.downloads} downloads`}>
+                <Download className="w-3.5 h-3.5 text-primary" />
+                <span className="text-xs font-medium text-gray-200">{metrics.downloads.toLocaleString()}</span>
+                <span className="text-xs text-gray-400">Downloads</span>
+              </div>
+            )}
+            {metrics.contributors !== undefined && (
+              <div className="bg-zinc-800/50 rounded-lg p-2 flex items-center gap-1.5" aria-label={`${metrics.contributors} contributors`}>
+                <Users className="w-3.5 h-3.5 text-primary" />
+                <span className="text-xs font-medium text-gray-200">{metrics.contributors.toLocaleString()}</span>
+                <span className="text-xs text-gray-400">Contributors</span>
+              </div>
+            )}
+            {metrics.lastUpdated && (
+              <div className="bg-zinc-800/50 rounded-lg p-2 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-primary" />
+                <span className="text-xs font-medium text-gray-200">
+                  {new Date(metrics.lastUpdated).toLocaleDateString()}
+                </span>
+                <span className="text-xs text-gray-400">Updated</span>
+              </div>
+            )}
           </div>
+
+          {/* View Button */}
+          <motion.a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full bg-primary/10 hover:bg-primary/20 text-primary rounded-lg py-1.5 px-3 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            aria-label={`View ${name} on HuggingFace`}
+          >
+            View on HuggingFace
+            <ExternalLink className="w-3.5 h-3.5" />
+          </motion.a>
         </div>
       </motion.div>
     )
@@ -125,4 +152,4 @@ const HuggingFaceCard = React.forwardRef<HTMLDivElement, HuggingFaceCardProps>(
 )
 HuggingFaceCard.displayName = "HuggingFaceCard"
 
-export { HuggingFaceCard } 
+export { HuggingFaceCard }
