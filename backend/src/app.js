@@ -32,45 +32,12 @@ console.log('Environment:', {
   MONGODB_URI: process.env.MONGODB_URI ? '***' : 'not set'
 });
 
-// MongoDB connection with increased timeout and better error handling
-console.log('Attempting to connect to MongoDB...');
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 30000, // 30 seconds
-  socketTimeoutMS: 45000, // 45 seconds
-  connectTimeoutMS: 30000, // 30 seconds
-  maxPoolSize: 10,
-  retryWrites: true,
-  w: 'majority'
-})
-.then(() => {
-  console.log('Connected to MongoDB successfully');
-  
-  // Start the server after successful MongoDB connection
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    // Initialize scraping tasks and digest generation
-    scheduleScrapingTasks();
-  });
-})
-.catch(err => {
-  console.error('MongoDB connection error:', err);
-  console.error('Error details:', {
-    name: err.name,
-    message: err.message,
-    code: err.code,
-    codeName: err.codeName
-  });
-  process.exit(1); // Exit if we can't connect to MongoDB
-});
-
-// Add connection event listeners
-mongoose.connection.on('disconnected', () => {
-  console.log('MongoDB disconnected. Attempting to reconnect...');
-  // Attempt to reconnect after a delay
-  setTimeout(() => {
-    mongoose.connect(process.env.MONGODB_URI, {
+// Consolidated MongoDB connection function
+const connectDB = async () => {
+  try {
+    console.log('Attempting to connect to MongoDB...');
+    
+    const connectionOptions = {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       serverSelectionTimeoutMS: 30000,
@@ -79,35 +46,12 @@ mongoose.connection.on('disconnected', () => {
       maxPoolSize: 10,
       retryWrites: true,
       w: 'majority'
-    });
-  }, 5000);
-});
+    };
 
-// Handle process termination
-process.on('SIGINT', async () => {
-  try {
-    await mongoose.connection.close();
-    console.log('MongoDB connection closed through app termination');
-    process.exit(0);
-  } catch (err) {
-    console.error('Error closing MongoDB connection:', err);
-    process.exit(1);
-  }
-});
-
-// MongoDB Connection
-const connectDB = async () => {
-  try {
-    console.log('Attempting to connect to MongoDB...');
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-    });
+    await mongoose.connect(process.env.MONGODB_URI, connectionOptions);
     console.log('MongoDB connected successfully');
 
-    // Handle connection events
+    // Set up connection event listeners
     mongoose.connection.on('connected', () => {
       console.log('MongoDB connected');
     });
@@ -121,27 +65,24 @@ const connectDB = async () => {
       setTimeout(connectDB, 5000);
     });
 
-    // Handle process termination
-    process.on('SIGINT', async () => {
-      try {
-        await mongoose.connection.close();
-        console.log('MongoDB connection closed through app termination');
-        process.exit(0);
-      } catch (err) {
-        console.error('Error closing MongoDB connection:', err);
-        process.exit(1);
-      }
-    });
-
+    return true;
   } catch (error) {
     console.error('MongoDB connection error:', error);
-    // Retry connection after 5 seconds
-    setTimeout(connectDB, 5000);
+    return false;
   }
 };
 
-// Start MongoDB connection
-connectDB();
+// Handle process termination
+process.on('SIGINT', async () => {
+  try {
+    await mongoose.connection.close();
+    console.log('MongoDB connection closed through app termination');
+    process.exit(0);
+  } catch (err) {
+    console.error('Error closing MongoDB connection:', err);
+    process.exit(1);
+  }
+});
 
 // Auth middleware
 const auth = (req, res, next) => {
@@ -285,22 +226,22 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
+// Start the application
 const startServer = async () => {
-  try {
-    await connectDB();
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-      scheduleScrapingTasks();
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
+  const isConnected = await connectDB();
+  if (!isConnected) {
+    console.error('Failed to connect to MongoDB. Exiting...');
     process.exit(1);
   }
+
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    scheduleScrapingTasks();
+  });
 };
 
-// Only start the server if not in test environment
-if (process.env.NODE_ENV !== 'test') {
+// Only start the server if this file is run directly
+if (require.main === module) {
   startServer();
 }
 
