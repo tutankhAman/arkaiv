@@ -12,7 +12,6 @@ async function generateDigestDocument() {
 
     console.log('Generating daily digest...');
     const digest = await generateDailyDigest();
-    console.log();
 
     // Format the date
     const formattedDate = digest.date.toLocaleDateString('en-US', {
