@@ -5,11 +5,11 @@ Arkaiv is an automated platform that tracks, summarizes, and displays the latest
 ## 🚀 Features
 
 ### 🔍 Data Collection & Analysis
-- **📊 Multi-Source Data Aggregation**
-  - GitHub repositories (sorted by stars)
-  - Hugging Face models (sorted by downloads)
-  - arXiv papers (sorted by citations)
-  - Daily web-scraping for newest releases
+- Multi-Source Data Aggregation
+- GitHub repositories (sorted by stars)
+- Hugging Face models (sorted by downloads)
+- arXiv papers (sorted by citations)
+- Daily web-scraping for newest releases
 
 ### 🤖 AI-Powered Summarization
 - Automated summaries of new AI tools and models
