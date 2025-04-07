@@ -4,27 +4,26 @@ Arkaiv is an automated platform that tracks, summarizes, and displays the latest
 
 ## 🚀 Features
 
-### Data Collection & Analysis
-- **Multi-Source Data Aggregation**
+### 🔍 Data Collection & Analysis
+- **📊 Multi-Source Data Aggregation**
   - GitHub repositories (sorted by stars)
   - Hugging Face models (sorted by downloads)
   - arXiv papers (sorted by citations)
-  - Real-time updates via WebSocket
+  - Daily web-scraping for newest releases
 
-### AI-Powered Summarization
+### 🤖 AI-Powered Summarization
 - Automated summaries of new AI tools and models
 - BART-Large-CNN powered text extraction
 - Cached summaries for efficiency
-- Fallback to OpenAI when needed
+- Fallback to OpenAI-3.5 Turbo when needed
+- Automated daily digest generation and mailing service
 
-### Dashboard & Visualization
-- Interactive trend analysis
+### 📊 Dashboard & Visualization
 - Real-time metrics tracking
 - Source-specific filtering
-- Responsive mobile layout
 
-### Digest System
-- Daily/weekly email subscriptions
+### 📧 Digest System
+- Daily email subscriptions
 - Customizable digest preferences
 - Email tracking and analytics
 - Unsubscribe management
@@ -34,19 +33,17 @@ Arkaiv is an automated platform that tracks, summarizes, and displays the latest
 ### Backend
 - **Node.js** with Express
 - **MongoDB** for data storage
-- **WebSocket** for real-time updates
 - **Playwright** for web scraping
 
 ### Frontend
 - **Vite** for build tooling
 - **React** for UI components
-- **Chart.js** for visualizations
 - **React-Query** for data fetching
 
 ### AI & Processing
 - **Hugging Face Inference API**
-- **OpenAI API** (fallback)
 - **BART-Large-CNN** for summarization
+- **OpenAI API** (fallback)
 
 ## 📦 Installation
 
@@ -60,7 +57,7 @@ Arkaiv is an automated platform that tracks, summarizes, and displays the latest
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/arkaiv.git
+   git clone https://github.com/tutankhAman/arkaiv.git
    cd arkaiv
    ```
 
@@ -76,17 +73,7 @@ Arkaiv is an automated platform that tracks, summarizes, and displays the latest
    ```
 
 3. Configure environment variables:
-   Create `.env` files in both backend and frontend directories:
-   ```
-   # Backend .env
-   PORT=3000
-   MONGODB_URI=your_mongodb_connection_string
-   HUGGINGFACE_API_KEY=your_huggingface_api_key
-   OPENAI_API_KEY=your_openai_api_key
-   
-   # Frontend .env
-   VITE_API_URL=http://localhost:3000
-   ```
+   Create `.env` files in both backend and frontend directories referring to `.env.example` file.
 
 4. Install Playwright for web scraping:
    ```bash
