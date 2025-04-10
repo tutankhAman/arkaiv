@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://arkaiv.vercel.app', 'https://arkaiv.onrender.com']
-    : ['http://localhost:5173', 'http://localhost:5174'],
+    : ['http://localhost:5176'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
@@ -33,6 +33,11 @@ app.use(cors({
 app.options('*', cors());
 
 app.use(express.json());
+
+// Mount routes
+app.use('/api/auth', authRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/subscription', subscriptionRoutes);
 
 // Log environment variables (without sensitive data)
 console.log('Environment:', {
@@ -110,11 +115,6 @@ const auth = (req, res, next) => {
 };
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/search', searchRoutes);
-app.use('/api/subscription', subscriptionRoutes);
-
-// Protected routes
 app.get('/api/tools', auth, async (req, res) => {
   try {
     console.log('Fetching all tools from database...');

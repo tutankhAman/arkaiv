@@ -5,9 +5,17 @@ const User = require('../models/User');
 
 // Add CORS headers middleware
 router.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' 
-    ? 'https://arkaiv.vercel.app'
-    : 'http://localhost:5173');
+  const allowedOrigins = [
+    'https://arkaiv.vercel.app',
+    'http://localhost:5176',
+    'http://localhost:5173'
+  ];
+  
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
@@ -17,6 +25,15 @@ router.use((req, res, next) => {
 // Handle preflight requests
 router.options('*', (req, res) => {
   res.sendStatus(200);
+});
+
+// Error handling middleware
+router.use((err, req, res, next) => {
+  console.error('Auth route error:', err);
+  res.status(500).json({
+    message: 'Internal server error',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'An error occurred'
+  });
 });
 
 // Register new user
@@ -131,6 +148,7 @@ router.post('/login', async (req, res) => {
     );
 
     console.log('Login successful');
+    res.setHeader('Content-Type', 'application/json');
     res.json({
       token,
       user: {
@@ -143,6 +161,7 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     console.error('Error stack:', error.stack);
+    res.setHeader('Content-Type', 'application/json');
     res.status(500).json({ 
       message: 'Error logging in', 
       error: error.message,
