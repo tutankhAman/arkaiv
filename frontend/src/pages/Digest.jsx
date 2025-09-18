@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, Calendar, ChevronDown } from 'lucide-react';
+import { Loader2, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { hardcodedDigests } from '../data/hardcodedDigests';
 
 const Digest = () => {
   const [digests, setDigests] = useState([]);
@@ -20,14 +21,39 @@ const Digest = () => {
         });
         if (!response.ok) throw new Error('Failed to fetch digests');
         const data = await response.json();
-        setDigests(data);
-        // Set the most recent digest as selected
-        if (data.length > 0) {
-          setSelectedDigest(data[0]);
+
+        // Merge with hardcoded digests by date (YYYY-MM-DD). Hardcoded entries override server ones for past dates
+        const toKey = (d) => {
+          const dt = new Date(d.date);
+          const y = dt.getFullYear();
+          const m = String(dt.getMonth() + 1).padStart(2, '0');
+          const day = String(dt.getDate()).padStart(2, '0');
+          return `${y}-${m}-${day}`;
+        };
+
+        const serverMap = new Map((data || []).map((d) => [toKey(d), d]));
+        const hardcodedMap = new Map(hardcodedDigests.map((d) => [toKey(d), d]));
+
+        // Start from server data, override with hardcoded if present
+        const mergedKeys = new Set([...serverMap.keys(), ...hardcodedMap.keys()]);
+        const merged = Array.from(mergedKeys)
+          .map((k) => hardcodedMap.get(k) || serverMap.get(k))
+          .filter(Boolean)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+        setDigests(merged);
+        if (merged.length > 0) {
+          setSelectedDigest(merged[0]);
         }
       } catch (error) {
         console.error('Error fetching digests:', error);
-        setError(error.message);
+        // Fallback entirely to hardcoded digests when API fails
+        const fallback = [...hardcodedDigests].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setDigests(fallback);
+        if (fallback.length > 0) {
+          setSelectedDigest(fallback[0]);
+        }
+        setError(null);
       } finally {
         setIsLoading(false);
       }
